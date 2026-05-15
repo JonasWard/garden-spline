@@ -40,11 +40,11 @@ const getBaseRayQuad = ({ relativeSize, globalSize }: QuadType) =>
     ...baseQuads,
     ...baseQuads.map((r) => ({
       ...r,
-      origin: r.origin.clone().add(centerShift(getFirstValueFromRelative(relativeSize) * globalSize))
+      origin: r.origin.clone().add(centerShift(getFirstValueFromRelative(relativeSize)))
     }))
   ]
     .map((r) => ({ ...r, origin: r.origin.clone() }))
-    .map((r) => (r.origin.add(centerShift(getFirstValueFromRelative(relativeSize) * globalSize * -0.5)), r))
+    .map((r) => (r.origin.add(centerShift(getFirstValueFromRelative(relativeSize) * -0.5)), r))
     .map((ray) => scaleAxisRay(ray, globalSize)) as [AxisRay, AxisRay, AxisRay, AxisRay];
 
 const baseHexes: [AxisRay, AxisRay, AxisRay] = [

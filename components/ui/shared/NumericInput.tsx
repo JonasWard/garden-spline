@@ -9,7 +9,7 @@ export const NumericInput: React.FC<{
   step?: number;
   value: number;
   onChange: (value: number) => void;
-  inputClass: string;
+  inputClass?: string;
 }> = ({ value, onChange, inputClass, ...props }) => {
   const [internalValue, setInternalValue] = useState<string>(value.toString());
 
@@ -20,7 +20,7 @@ export const NumericInput: React.FC<{
   return (
     <input
       type="number"
-      className={inputClass}
+      className={inputClass ?? 'configurator-panel-numeric-input'}
       value={internalValue}
       onChange={(e) => setInternalValue(e.target.value)}
       onBlur={() => onChange(parseValue(internalValue))}

@@ -13,3 +13,10 @@
   gap: 8px;
   padding: 12px;
 }
+
+.configurator-panel-numeric-input {
+  background-color: black;
+  border: 1px solid white;
+  border-radius: 6px;
+  padding: 12px 8px;
+}
