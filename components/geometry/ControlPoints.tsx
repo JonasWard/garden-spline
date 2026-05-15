@@ -1,8 +1,9 @@
 'use client';
 
+import { useR3FStore } from '@/store/r3f-store';
 import { Line } from '@react-three/drei';
 import { ThreeEvent } from '@react-three/fiber';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Mesh } from 'three';
 import { Matrix4, Vector3 } from 'three';
 
@@ -63,7 +64,7 @@ function closestPointOnLineToRay(
   out.copy(linePoint).addScaledVector(v1, s);
 }
 
-const Sphere: React.FC<{
+const ControlPoint: React.FC<{
   constraint: 'x' | 'y' | 'z';
   position: Vector3;
   onChange: (newPosition: Vector3) => void;
@@ -74,6 +75,11 @@ const Sphere: React.FC<{
     world0: Vector3;
     axisWorld: Vector3;
   } | null>(null);
+
+  useEffect(() => {
+    if (constraintGuide) useR3FStore.getState().enableOrbitConrol && useR3FStore.setState({ enableOrbitConrol: false });
+    else !useR3FStore.getState().enableOrbitConrol && useR3FStore.setState({ enableOrbitConrol: true });
+  }, [constraintGuide]);
 
   const drag = useRef<{
     pointerId: number;
@@ -207,7 +213,7 @@ export const ControlPoints: React.FC<{
 }> = ({ positions, onChange, radius = RADIUS, constraint = CONSTRAINT }) => (
   <group>
     {positions.map((pos, index) => (
-      <Sphere
+      <ControlPoint
         key={index}
         constraint={constraint}
         position={pos}

@@ -8,10 +8,8 @@ import type { AxisType } from '@/lib/components/types/axis';
 import type { ReferenceSurfaceBase } from '@/lib/components/types/reference-surface';
 import { getUVBoxLines } from '@/lib/components/logic/reference-surface/base-compute';
 import { getBaseAxisRays } from '@/lib/components/logic/axis/base-compute';
-import { AxisRay2D } from '@/lib/components/logic/axis/AxisRay';
 import { getOriginsForAxisRayInUVBox } from '@/lib/components/logic/axis/populate-uv-box';
 import { Limits } from '@/lib/components/logic/reference-surface/Limits';
-import { Sphere } from './Sphere';
 import { randomColor } from '@/lib/components/color/random-color';
 
 export type AxisRender2dProps = {
@@ -24,14 +22,6 @@ export type AxisRender2dProps = {
  */
 export const AxisRender2d: FC<AxisRender2dProps> = ({ axis, referenceSurface }) => {
   const segments = useMemo(() => get2DVisualisation(axis, referenceSurface), [axis, referenceSurface]);
-  const boundingLines = useMemo(() => getUVBoxLines(referenceSurface), [referenceSurface]);
-  const baseRays = useMemo(() => getBaseAxisRays(axis), [axis]);
-  const origins = useMemo(
-    () => baseRays.flatMap((ray) => getOriginsForAxisRayInUVBox(ray, referenceSurface)),
-    [baseRays, referenceSurface]
-  );
-
-  console.log({ segments, boundingLines, baseRays, origins });
 
   return (
     <>
@@ -40,37 +30,13 @@ export const AxisRender2d: FC<AxisRender2dProps> = ({ axis, referenceSurface }) 
           <Line
             key={i}
             points={[a, b]}
-            color={randomColor()}
+            color={randomColor(i)}
             lineWidth={10}
             dashed={false}
             depthTest
             transparent
             opacity={0.9}
           />
-        ))}
-      </group>
-      <group>
-        {boundingLines.map((line, i) => (
-          <Line
-            key={i}
-            points={[line.start, line.end]}
-            color="#ff0000"
-            lineWidth={1}
-            dashed={false}
-            depthTest
-            transparent
-            opacity={0.9}
-          />
-        ))}
-      </group>
-      <group>
-        {baseRays.map((ray, i) => (
-          <AxisRay2D key={i} ray={ray} />
-        ))}
-      </group>
-      <group>
-        {origins.map((origin, i) => (
-          <Sphere key={i} origin={origin} color="#fbf0df" radius={0.01} />
         ))}
       </group>
       <Limits rS={referenceSurface} />

@@ -17,7 +17,7 @@ const scaleAxisRay = (ray: AxisRay, scale: number): AxisRay => ({
   spacingDirection: ray.spacingDirection.clone().multiplyScalar(scale)
 });
 
-const getFirstValueFromRelative = (relativePosition: number) => relativePosition * (relativePosition + 1);
+const getFirstValueFromRelative = (relativePosition: number) => relativePosition / (relativePosition + 1);
 
 const baseTris: [AxisRay, AxisRay, AxisRay] = [
   { origin: new Vector2(), direction: X_AXIS, spacingDirection: T_60_DEG },
@@ -36,17 +36,16 @@ const baseQuads: [AxisRay, AxisRay] = [
 const centerShift = (v: number) => new Vector2(v, v);
 
 const getBaseRayQuad = ({ relativeSize, globalSize }: QuadType) =>
-  relativeSize === 1
-    ? (baseQuads.map((ray) => scaleAxisRay(ray, globalSize)) as [AxisRay, AxisRay])
-    : ([
-        ...baseQuads,
-        ...baseQuads.map((r) => ({
-          ...r,
-          origin: r.origin.clone().add(centerShift(getFirstValueFromRelative(relativeSize)))
-        }))
-      ]
-        .map((r) => (r.origin.add(centerShift(getFirstValueFromRelative(relativeSize * -0.5))), r))
-        .map((ray) => scaleAxisRay(ray, globalSize)) as [AxisRay, AxisRay, AxisRay, AxisRay]);
+  [
+    ...baseQuads,
+    ...baseQuads.map((r) => ({
+      ...r,
+      origin: r.origin.clone().add(centerShift(getFirstValueFromRelative(relativeSize) * globalSize))
+    }))
+  ]
+    .map((r) => ({ ...r, origin: r.origin.clone() }))
+    .map((r) => (r.origin.add(centerShift(getFirstValueFromRelative(relativeSize) * globalSize * -0.5)), r))
+    .map((ray) => scaleAxisRay(ray, globalSize)) as [AxisRay, AxisRay, AxisRay, AxisRay];
 
 const baseHexes: [AxisRay, AxisRay, AxisRay] = [
   { origin: new Vector2(), direction: X_AXIS, spacingDirection: T_60_DEG },

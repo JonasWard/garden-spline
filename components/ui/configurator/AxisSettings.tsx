@@ -1,8 +1,5 @@
-import type { FC } from 'react';
-
 import type { AxisType } from '@/lib/components/types/axis';
 import { DEFAULT_AXIS_BASES } from '@/lib/components/types/axis';
-import { clamp } from '@/lib/grid-shell/utils';
 import { Select } from '../shared/Select';
 import { NumericInput } from '../shared/NumericInput';
 
@@ -23,45 +20,66 @@ const trimType = (axis: AxisType): Omit<AxisType, 'type'> => {
   return s;
 };
 
-const axisPatternOptions: {value: AxisType['type'], label: string}[] = [
-  {value: 'tri', label: 'Triangular'},
-  {value: 'hex', label: 'Hex'},
-  {value: 'quad', label: 'Quad'},
-  {value: 'octagonal', label: 'Octagonal'}
+const axisPatternOptions: { value: AxisType['type']; label: string }[] = [
+  { value: 'tri', label: 'Triangular' },
+  { value: 'hex', label: 'Hex' },
+  { value: 'quad', label: 'Quad' },
+  { value: 'octagonal', label: 'Octagonal' }
 ];
 
-const AxisPatternSelect: FC<{ axis: AxisType; setAxis: (next: AxisType) => void }> = ({ axis, setAxis }) => 
-  <Select options={axisPatternOptions} onChange={(k) => setAxis({  ...DEFAULT_AXIS_BASES[k as AxisType['type']], ...trimType(axis) })} inputClass={inputClass} value={axis.type} />
+const AxisPatternSelect: React.FC<{ axis: AxisType; setAxis: (next: AxisType) => void }> = ({ axis, setAxis }) => (
+  <Select
+    options={axisPatternOptions}
+    onChange={(k) => setAxis({ ...DEFAULT_AXIS_BASES[k as AxisType['type']], ...trimType(axis) })}
+    inputClass={inputClass}
+    value={axis.type}
+  />
+);
 
-const AxisGlobalSizeField: FC<{ axis: AxisType; setAxis: (next: AxisType) => void }> = ({ axis, setAxis }) => (
-  <label className="flex flex-col gap-1" data-axis-section="global-size">
+const AxisGlobalSizeField: React.FC<{ axis: AxisType; setAxis: (next: AxisType) => void }> = ({ axis, setAxis }) => (
+  <label className="flex flex-col gap-1 w-full" data-axis-section="global-size">
     <span className="text-xs font-semibold uppercase tracking-wide text-white/50">Global size</span>
-    <NumericInput value={axis.globalSize} onChange={(v) => setAxis({ ...axis, globalSize: v } as AxisType)} inputClass={inputClass} min={0.05} max={5} step={0.05} />
+    <NumericInput
+      value={axis.globalSize}
+      onChange={(v) => setAxis({ ...axis, globalSize: v } as AxisType)}
+      inputClass={inputClass}
+      min={0.05}
+      max={5}
+      step={0.05}
+    />
   </label>
 );
 
-const AxisRelativeSizeField: FC<{ axis: QuadType | OctagonalType; setAxis: (next: AxisType) => void }> = ({
+const AxisRelativeSizeField: React.FC<{ axis: QuadType | OctagonalType; setAxis: (next: AxisType) => void }> = ({
   axis,
   setAxis
 }) => (
-  <label className="flex flex-col gap-1" data-axis-section="relative-size">
+  <label className="flex flex-col gap-1 w-full" data-axis-section="relative-size">
     <span className="text-xs font-semibold uppercase tracking-wide text-white/50">Relative size</span>
-    <NumericInput value={axis.relativeSize} onChange={(v) => setAxis({ ...axis, relativeSize: v } as AxisType)} inputClass={inputClass} min={0.05} max={5} step={0.05} />
+    <NumericInput
+      value={axis.relativeSize}
+      onChange={(v) => setAxis({ ...axis, relativeSize: v } as AxisType)}
+      inputClass={inputClass}
+      min={0.05}
+      max={5}
+      step={0.05}
+    />
   </label>
 );
 
-export const AxisSettings: FC<AxisSettingsProps> = ({ axis, setAxis }) => (
-  <section
-    className="space-y-4 rounded-xl border border-white/10 bg-black/15 p-4 text-left"
-    aria-label="Axis pattern settings"
-  >
+export const AxisSettings: React.FC<AxisSettingsProps> = ({ axis, setAxis }) => (
+  <section className="configurator-panel section" aria-label="Axis pattern settings">
     <header className="space-y-1">
       <h2 className="text-base font-semibold text-white/90">Axis</h2>
       <p className="text-xs text-white/45">Shell overlay pattern (tri / hex / quad / octagonal).</p>
     </header>
 
     <AxisPatternSelect axis={axis} setAxis={setAxis} />
-    <AxisGlobalSizeField axis={axis} setAxis={setAxis} />
-    {axis.type === 'quad' || axis.type === 'octagonal' ? <AxisRelativeSizeField axis={axis} setAxis={setAxis} /> : null}
+    <div className="flex gap-4 w-full">
+      <AxisGlobalSizeField axis={axis} setAxis={setAxis} />
+      {axis.type === 'quad' || axis.type === 'octagonal' ? (
+        <AxisRelativeSizeField axis={axis} setAxis={setAxis} />
+      ) : null}
+    </div>
   </section>
 );
