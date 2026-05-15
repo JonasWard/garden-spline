@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 
-const BASE_PATH = "/ppp";
+const BASE_PATH = '/garden-spline';
 
 export const metadata: Metadata = {
   title: "Next + React Three Fiber",

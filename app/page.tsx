@@ -1,6 +1,4 @@
-import { APITester } from "@/components/APITester";
-
-const BASE_PATH = "/ppp";
+const BASE_PATH = '/garden-spline';
 
 export default function Home() {
   return (
@@ -23,8 +21,6 @@ export default function Home() {
         Edit <code className="bg-[#1a1a1a] px-2 py-1 rounded font-mono">app/page.tsx</code> and save to test Fast
         Refresh
       </p>
-
-      <APITester />
     </div>
   );
 }
