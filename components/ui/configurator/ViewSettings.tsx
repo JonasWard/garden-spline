@@ -1,6 +1,7 @@
 export type ViewSettings = {
   showAxis: boolean;
   showAxis3d: boolean;
+  showBeam: boolean;
   showReferenceSurfaceVisualisation: boolean;
   showControlPoints: boolean;
   showWireframe: boolean;
@@ -33,6 +34,11 @@ export const ViewSettingsUI = ({ viewSettings, setViewSettings }: ViewSettingsUI
         checked={viewSettings.showAxis3d}
         onChange={() => setViewSettings({ ...viewSettings, showAxis3d: !viewSettings.showAxis3d })}
         label="Show axis 3D"
+      />
+      <CheckboxHelper
+        checked={viewSettings.showBeam}
+        onChange={() => setViewSettings({ ...viewSettings, showBeam: !viewSettings.showBeam })}
+        label="Show beam"
       />
       <CheckboxHelper
         checked={viewSettings.showReferenceSurfaceVisualisation}

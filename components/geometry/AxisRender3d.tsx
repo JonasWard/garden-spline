@@ -13,8 +13,7 @@ export type AxisRender3dProps = {
 };
 
 /**
- * Axis lines lifted onto the reference surface using {@link get3DVisualisation} /
- * {@link sampleReferenceSurfacePosition}.
+ * Axis polylines lifted onto the reference surface ({@link get3DVisualisation}).
  */
 export const AxisRender3d: FC<AxisRender3dProps> = ({ axis, referenceSurface }) => {
   const polylines = useMemo(() => get3DVisualisation(axis, referenceSurface), [axis, referenceSurface]);

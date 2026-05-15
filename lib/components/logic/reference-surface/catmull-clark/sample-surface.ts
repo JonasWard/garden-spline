@@ -390,6 +390,19 @@ export function sampleReferenceSurfacePosition(
   return out;
 }
 
+/** Reuses one subdivided mesh for many UV queries (avoids repeated {@link prepareMesh} per sample). */
+export function createReferenceSurfaceSampler(
+  surface: ReferenceSurface,
+  options?: SampleReferenceSurfaceOptions
+): (uv: GridUv, position: Vector3, normal: Vector3) => void {
+  const levels = options?.subdivisionLevels ?? 0;
+  const { vertices, faces, domains } = prepareMesh(surface, levels);
+  return (uv: GridUv, position: Vector3, normal: Vector3) => {
+    const { coarseFaceIndex, uLocal, vLocal } = gridUvToCoarseFaceLocal(surface.n, surface.m, uv.u, uv.v);
+    evaluateOnRefinedMesh(vertices, faces, domains, coarseFaceIndex, uLocal, vLocal, position, normal);
+  };
+}
+
 export function sampleReferenceSurfaceNormal(
   surface: ReferenceSurface,
   uv: GridUv,

@@ -78,7 +78,7 @@ const getBaseRayOctagonal = (octagonalAxis: OctagonalType): [AxisRay, AxisRay, A
       ...r,
       origin: r.origin.clone().add(o2)
     }))
-  ] as [AxisRay, AxisRay, AxisRay, AxisRay, AxisRay, AxisRay];
+  ].map((r) => scaleAxisRay(r, octagonalAxis.globalSize)) as [AxisRay, AxisRay, AxisRay, AxisRay, AxisRay, AxisRay];
 };
 
 /**

@@ -1,11 +1,13 @@
 'use client';
 
 import { AxisType } from '@/lib/components/types/axis';
+import type { BeamType } from '@/lib/components/types/beam';
 import { ReferenceSurface } from '@/lib/components/types/reference-surface';
 import { Canvas, Vector3 } from '@react-three/fiber';
 import { AxisRender2d } from './geometry/AxisRender2d';
 import { ReferenceGeometry } from './geometry/ReferenceGeometry';
 import { AxisRender3d } from './geometry/AxisRender3d';
+import { BeamRender } from './geometry/BeamRender';
 import { ControlPoints } from './geometry/ControlPoints';
 import { OrbitControls } from '@react-three/drei';
 import { Matrix4 } from 'three';
@@ -17,6 +19,7 @@ const PositiveCoordinateSystem = new Matrix4(1, 0, 0, 0, 0, 0, 1, 0, 0, -1, 0, 0
 export type GridShellSceneProps = {
   referenceSurface: ReferenceSurface;
   axisType: AxisType;
+  beam: BeamType;
   viewSettings: ViewSettings;
   onControlPointsChange: (controlPoints: Vector3[]) => void;
 };
@@ -24,6 +27,7 @@ export type GridShellSceneProps = {
 export const GridShellScene: React.FC<GridShellSceneProps> = ({
   referenceSurface,
   axisType,
+  beam,
   viewSettings,
   onControlPointsChange
 }) => {
@@ -38,6 +42,7 @@ export const GridShellScene: React.FC<GridShellSceneProps> = ({
         <directionalLight position={[4, 4, 4]} intensity={1.15} />
         {viewSettings.showAxis && <AxisRender2d axis={axisType} referenceSurface={referenceSurface} />}
         {viewSettings.showAxis3d && <AxisRender3d axis={axisType} referenceSurface={referenceSurface} />}
+        {viewSettings.showBeam && <BeamRender axis={axisType} referenceSurface={referenceSurface} beam={beam} />}
         {viewSettings.showReferenceSurfaceVisualisation && (
           <ReferenceGeometry referenceSurface={referenceSurface} showWireframe={viewSettings.showWireframe} />
         )}

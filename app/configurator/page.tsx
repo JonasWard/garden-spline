@@ -23,6 +23,7 @@ export default function SimpleGridShellPage() {
   const [viewSettings, setViewSettings] = useState<ViewSettings>({
     showAxis: true,
     showAxis3d: true,
+    showBeam: true,
     showReferenceSurfaceVisualisation: true,
     showControlPoints: true,
     showWireframe: false
@@ -42,6 +43,7 @@ export default function SimpleGridShellPage() {
       <GridShellScene
         referenceSurface={{ ...referenceSurfaceBase, controlPoints }}
         axisType={axisType}
+        beam={beam}
         viewSettings={viewSettings}
         onControlPointsChange={(vs) => {
           setControlPoints(vs as Vector3[]);
