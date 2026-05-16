@@ -16,6 +16,11 @@ type StackBeamType = BaseBeamType & {
 
 export type BeamType = InlineType | StackBeamType;
 
+export const BEAM_STACK_MIN_MAX = {
+  min: 1,
+  max: 5
+};
+
 export const DEFAULT_BEAM = {
   inline: {
     type: 'inline',
