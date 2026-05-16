@@ -3,7 +3,7 @@ import { DEFAULT_SURFACE_BASE, ReferenceSurfaceBase, UVBox } from '../../types/r
 import { FiniteLine2D } from '../geometry/line2d';
 
 const getUVRange = ({ m, n, dX, dY }: ReferenceSurfaceBase = DEFAULT_SURFACE_BASE): Vector2 =>
-  new Vector2(dX * m, dY * n);
+  new Vector2(dX * n, dY * m);
 
 const getUVDiagonal = (referenceSurface: ReferenceSurfaceBase): Vector2 => getUVRange(referenceSurface);
 
@@ -24,8 +24,8 @@ export const getUVCorners = (referenceSurface: ReferenceSurfaceBase): Vector2[] 
 };
 
 export const getDefaultControlPoints = ({ m, n, dX, dY }: ReferenceSurfaceBase): Vector3[] =>
-  [...new Array(m + 1)]
-    .map((_, i) => [...new Array(n + 1)].flatMap((_, j) => new Vector3((i - m * 0.5) * dX, (j - n * 0.5) * dY, 0)))
+  [...new Array(n + 1)]
+    .map((_, i) => [...new Array(m + 1)].flatMap((_, j) => new Vector3((i - m * 0.5) * dX, (j - m * 0.5) * dY, 0)))
     .flat();
 
 export const getUVBox = (rS: ReferenceSurfaceBase): UVBox => [getUVBottomLeft(rS), getUVTopRight(rS)];

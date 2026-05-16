@@ -9,7 +9,7 @@ export const Limits: React.FC<{ rS: ReferenceSurfaceBase }> = ({ rS }) => {
   return (
     <group>
       {[xMin, yMin, xMax, yMax].map((limit) => (
-        <InfiniteLine2dRenderer line={limit} />
+        <InfiniteLine2dRenderer line={limit} color={'#ff00ff'} />
       ))}
     </group>
   );

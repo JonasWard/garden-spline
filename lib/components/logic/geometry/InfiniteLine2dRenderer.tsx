@@ -10,10 +10,10 @@ const getInfiniteLine = (o: Vector2, d: Vector2): Vector2[] => [
   o.clone().add(d.clone().multiplyScalar(InfiniteLength))
 ];
 
-export const InfiniteLine2dRenderer: React.FC<{ line: InfiniteLine2D }> = ({ line }) => (
+export const InfiniteLine2dRenderer: React.FC<{ line: InfiniteLine2D; color?: string }> = ({ line, color }) => (
   <Line
     points={getInfiniteLine(line.origin, line.direction)}
-    color={InfiniteColor}
+    color={color ?? InfiniteColor}
     lineWidth={1}
     dashed={false}
     depthTest

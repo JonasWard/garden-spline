@@ -14,7 +14,7 @@ import {
 
 function appendLinesAsBeams(
   lines: AxisLine[],
-  referenceSurface: ReferenceSurface,
+  rS: ReferenceSurface,
   sampler: ReturnType<typeof createReferenceSurfaceSampler>,
   posScratch: Vector3,
   nScratch: Vector3,
@@ -26,8 +26,7 @@ function appendLinesAsBeams(
   vertexBase: number
 ): number {
   for (const [a, b] of lines.map(
-    ([p0, p1]) =>
-      [patternUvToSurfaceGridUv(p0, referenceSurface), patternUvToSurfaceGridUv(p1, referenceSurface)] as AxisLine
+    ([p0, p1]) => [patternUvToSurfaceGridUv(p0, rS), patternUvToSurfaceGridUv(p1, rS)] as AxisLine
   )) {
     const samples = sampleLiftedAxisSegmentOnSurface(a, b, sampler, posScratch, nScratch);
     vertexBase = appendBeamQuadStripGeometry(samples, halfW, halfH, positions, indices, vertexBase, normalOffset);

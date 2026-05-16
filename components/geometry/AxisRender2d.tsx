@@ -6,9 +6,6 @@ import { useMemo, type FC } from 'react';
 import { get2DVisualisation } from '@/lib/components/logic/axis/renderer';
 import type { AxisType } from '@/lib/components/types/axis';
 import type { ReferenceSurfaceBase } from '@/lib/components/types/reference-surface';
-import { getUVBoxLines } from '@/lib/components/logic/reference-surface/base-compute';
-import { getBaseAxisRays } from '@/lib/components/logic/axis/base-compute';
-import { getOriginsForAxisRayInUVBox } from '@/lib/components/logic/axis/populate-uv-box';
 import { Limits } from '@/lib/components/logic/reference-surface/Limits';
 import { randomColor } from '@/lib/components/color/random-color';
 

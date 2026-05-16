@@ -3,7 +3,6 @@ import { ReferenceSurfaceBase } from '../../types/reference-surface';
 import { AxisLine, AxisRay } from '../../types/axis';
 import {
   areParallelOrAntiParallel,
-  closestParameterOnInfiniteLine,
   evaluateFiniteLineAt,
   evaluateParameterAt,
   getPointsOnInfiniteLineInRange,
@@ -24,12 +23,15 @@ export const getUVBoxAxisLimits = (rS: ReferenceSurfaceBase) => ({
 });
 
 export const getOriginsForAxisRayInUVBox = (axisRay: AxisRay, rS: ReferenceSurfaceBase): Vector2[] => {
+  // intersect an infinite line through every of the corners and the direction of the axis ray with the infinite line defined by the spacing direction
+  // evaluate along the spacing direction line
+  const corners = getUVCorners(rS);
   const spacingDirectionLine = makeInfiniteLine2d(axisRay.origin, axisRay.spacingDirection);
-  const unitDirectionLine = makeInfiniteLine2d(axisRay.origin, axisRay.direction.clone().normalize());
-  const scale = axisRay.direction.length() / axisRay.spacingDirection.length();
-  const evaluationResults = getUVCorners(rS).map((v) => closestParameterOnInfiniteLine(unitDirectionLine, v) * scale);
-  const startT = Math.min(...evaluationResults) - 1;
-  const endT = Math.max(...evaluationResults) + 1;
+  const infiniteLines = corners.map((c) => makeInfiniteLine2d(c, axisRay.direction));
+  const evaluationResults = infiniteLines.map((line) => infiniteLineIntersection(line, spacingDirectionLine)![1]);
+
+  const startT = Math.min(...evaluationResults);
+  const endT = Math.max(...evaluationResults);
 
   return getPointsOnInfiniteLineInRange(spacingDirectionLine, [startT, endT]);
 };
