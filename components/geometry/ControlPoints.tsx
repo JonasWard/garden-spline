@@ -3,151 +3,154 @@
 import { useR3FStore } from '@/store/r3f-store';
 import { Html, Line } from '@react-three/drei';
 import { ThreeEvent, useFrame } from '@react-three/fiber';
-import { useCallback, useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Camera, Mesh, Object3D } from 'three';
 import { Matrix4, OrthographicCamera, PerspectiveCamera, Vector3 } from 'three';
+import { NumericInput } from '../ui/shared/NumericInput';
+import { evaluateParameterAt, infiniteLineIntersection } from '@/lib/components/logic/geometry/line3d';
 
-/** Half-length of the constraint guide in parent **local** space (large segment ≈ “infinite” on screen). */
-const CONSTRAINT_LINE_HALF_LOCAL = 400;
+type ConstraintAxis = 'x' | 'y' | 'z';
 
-const AXIS: Record<'x' | 'y' | 'z', Vector3> = {
+type ConstraintGuide = { world0: Vector3; axisWorld: Vector3 };
+
+type DragState = {
+  pointerId: number;
+  world0: Vector3;
+  axisWorld: Vector3;
+  captureTarget: HTMLElement;
+};
+
+const CONSTRAINT_LINE_HALF = 400;
+const AXIS_INPUT_OFFSET_X = 30;
+const AXIS_INPUT_HEIGHT_PX = 30;
+const DEFAULT_SCREEN_RADIUS_PX = 5;
+const SPHERE_GEOMETRY_RADIUS = 1;
+
+const AXIS: Record<ConstraintAxis, Vector3> = {
   x: new Vector3(1, 0, 0),
   y: new Vector3(0, 1, 0),
   z: new Vector3(0, 0, 1)
 };
 
-const TMP_W = new Vector3();
-const TMP_TO_RAY = new Vector3();
+const TMP = {
+  screen: new Vector3(),
+  mesh: new Vector3(),
+  cam: new Vector3(),
+  hit: new Vector3()
+};
 
-/** Screen px from projected **control point center** to the **left** edge of the Z input (LTR). */
-const Z_INPUT_SCREEN_OFFSET_X = 30;
-/** Fixed on-screen height of the Z value field (CSS pixels; no `distanceFactor` so Html scale stays 1). */
-const Z_INPUT_SCREEN_HEIGHT_PX = 30;
-/** Target apparent sphere radius in CSS pixels (mesh uses unit geometry + per-frame scale). */
-const CONTROL_POINT_SCREEN_RADIUS_PX = 5;
-/** Sphere geometry radius (world scale is applied each frame for constant screen size). */
-const CONTROL_POINT_GEOMETRY_RADIUS = 1;
-const HTML_SCREEN_POS = new Vector3();
-const SCREEN_SPHERE_MESH_POS = new Vector3();
-const SCREEN_SPHERE_CAM_POS = new Vector3();
+const GUIDE_LINE_PROPS = {
+  color: '#f3d5a3',
+  lineWidth: 1,
+  dashed: false as const,
+  depthTest: false,
+  renderOrder: 10,
+  opacity: 0.5,
+  transparent: true
+};
 
-/** Projects the control **center** (Html group world origin), then places the field in screen px to its right. */
-function calculateZInputScreenPosition(
-  el: Object3D,
+function axisWorldInParent(parent: Object3D, axis: ConstraintAxis): Vector3 {
+  return AXIS[axis].clone().transformDirection(parent.matrixWorld).normalize();
+}
+
+function constraintLineLocal(parent: Object3D, world0: Vector3, axisWorld: Vector3): [number, number, number][] {
+  parent.updateWorldMatrix(true, true);
+  const inv = new Matrix4().copy(parent.matrixWorld).invert();
+  const o = world0.clone().applyMatrix4(inv);
+  const u = axisWorld.clone().transformDirection(inv).normalize();
+  const a = o.clone().addScaledVector(u, -CONSTRAINT_LINE_HALF);
+  const b = o.clone().addScaledVector(u, CONSTRAINT_LINE_HALF);
+  return [
+    [a.x, a.y, a.z],
+    [b.x, b.y, b.z]
+  ];
+}
+
+function axisInputScreenPosition(el: Object3D, camera: Camera, size: { width: number; height: number }): number[] {
+  TMP.screen.setFromMatrixPosition(el.matrixWorld).project(camera);
+  const hw = size.width / 2;
+  const hh = size.height / 2;
+  return [TMP.screen.x * hw + hw + AXIS_INPUT_OFFSET_X, -TMP.screen.y * hh + hh - AXIS_INPUT_HEIGHT_PX / 2];
+}
+
+function screenSpaceSphereScale(
+  mesh: Mesh,
   camera: Camera,
-  size: { width: number; height: number }
-): number[] {
-  HTML_SCREEN_POS.setFromMatrixPosition(el.matrixWorld);
-  HTML_SCREEN_POS.project(camera);
-  const widthHalf = size.width / 2;
-  const heightHalf = size.height / 2;
-  const centerX = HTML_SCREEN_POS.x * widthHalf + widthHalf;
-  const centerY = -HTML_SCREEN_POS.y * heightHalf + heightHalf;
-  const x = centerX + Z_INPUT_SCREEN_OFFSET_X;
-  const y = centerY - Z_INPUT_SCREEN_HEIGHT_PX / 2;
-  return [x, y];
+  size: { width: number; height: number },
+  screenRadiusPx: number
+): number {
+  mesh.getWorldPosition(TMP.mesh);
+  camera.getWorldPosition(TMP.cam);
+  const dist = TMP.mesh.distanceTo(TMP.cam);
+  if (camera instanceof PerspectiveCamera) {
+    const vFov = (camera.fov * Math.PI) / 180;
+    return (screenRadiusPx * 2 * dist * Math.tan(vFov / 2)) / (size.height * SPHERE_GEOMETRY_RADIUS);
+  }
+  if (camera instanceof OrthographicCamera) {
+    return (screenRadiusPx * (camera.top - camera.bottom)) / camera.zoom / (size.height * SPHERE_GEOMETRY_RADIUS);
+  }
+  return SPHERE_GEOMETRY_RADIUS;
 }
 
-/**
- * Closest point on the infinite line (linePoint + s * lineDir) to the mouse ray (rayOrigin + t * rayDir).
- * Uses the skew-line closest-approach formula (two lines in space). The ray is the half-line t >= 0; if the
- * unconstrained closest point on the infinite ray line lies behind the origin, we use the closest point on the
- * constraint line to rayOrigin (orthogonal projection onto the axis).
- */
-function closestPointOnLineToRay(
-  linePoint: Vector3,
-  lineDir: Vector3,
-  rayOrigin: Vector3,
-  rayDir: Vector3,
-  out: Vector3
-): void {
-  const v1 = lineDir;
-  const v2 = rayDir;
-  TMP_W.subVectors(linePoint, rayOrigin);
-
-  const a = v1.dot(v1);
-  const b = v1.dot(v2);
-  const c = v2.dot(v2);
-  const d = v1.dot(TMP_W);
-  const e = v2.dot(TMP_W);
-  const denom = a * c - b * b;
-
-  let s: number;
-  let t: number;
-
-  if (Math.abs(denom) < 1e-12) {
-    TMP_TO_RAY.subVectors(rayOrigin, linePoint);
-    s = TMP_TO_RAY.dot(v1) / a;
-    out.copy(linePoint).addScaledVector(v1, s);
-    return;
+function releaseCapture(target: HTMLElement | undefined, pointerId: number) {
+  try {
+    target?.releasePointerCapture?.(pointerId);
+  } catch {
+    //
   }
-
-  s = (b * e - c * d) / denom;
-  t = (a * e - b * d) / denom;
-
-  if (t < 0) {
-    TMP_TO_RAY.subVectors(rayOrigin, linePoint);
-    s = TMP_TO_RAY.dot(v1) / a;
-  }
-
-  out.copy(linePoint).addScaledVector(v1, s);
 }
+
+const ConstraintGuideLine: React.FC<{ points: [number, number, number][] }> = ({ points }) => (
+  <Line points={points} {...GUIDE_LINE_PROPS} />
+);
 
 const ControlPoint: React.FC<{
-  constraint: 'x' | 'y' | 'z';
   position: Vector3;
-  onChange: (newPosition: Vector3) => void;
+  onChange: (position: Vector3) => void;
   screenRadiusPx: number;
-}> = ({ constraint, position, onChange, screenRadiusPx }) => {
+}> = ({ position, onChange, screenRadiusPx }) => {
   const meshRef = useRef<Mesh>(null);
-  const zInputRef = useRef<HTMLInputElement>(null);
-  const skipZCommitOnBlurRef = useRef(false);
-  const [constraintGuide, setConstraintGuide] = useState<{
-    world0: Vector3;
-    axisWorld: Vector3;
-  } | null>(null);
+  const axisInputRef = useRef<HTMLInputElement>(null);
+  const skipCommitOnBlur = useRef(false);
+  const drag = useRef<DragState | null>(null);
+
+  const constraint = useR3FStore((s) => s.controlPointConstraint);
+  const setEnableOrbitConrol = useR3FStore((s) => s.setEnableOrbitConrol);
+
+  const [guide, setGuide] = useState<ConstraintGuide | null>(null);
   const [dragLocal, setDragLocal] = useState<Vector3 | null>(null);
-  const [zInputFocused, setZInputFocused] = useState(false);
-  const [zDraft, setZDraft] = useState(() => position.z.toString());
+  const [inputFocused, setInputFocused] = useState(false);
 
-  const [localConstraint, setLcoalConstraint] = useState<'x' | 'y' | 'z'>(constraint);
-
-  const activeCommand = constraintGuide !== null || zInputFocused;
+  const interacting = guide !== null || inputFocused;
+  const display = dragLocal ?? position;
 
   useEffect(() => {
-    if (activeCommand) useR3FStore.getState().enableOrbitConrol && useR3FStore.setState({ enableOrbitConrol: false });
-    else !useR3FStore.getState().enableOrbitConrol && useR3FStore.setState({ enableOrbitConrol: true });
-  }, [activeCommand]);
+    setEnableOrbitConrol(!interacting);
+  }, [interacting, setEnableOrbitConrol]);
 
-  useEffect(() => {
-    if (!zInputFocused) setZDraft(position.z.toString());
-  }, [position.z, zInputFocused]);
+  const commitAxis = useCallback(
+    (value: number) => {
+      const next = position.clone();
+      next[constraint] = value;
+      onChange(next);
+    },
+    [constraint, onChange, position]
+  );
 
-  const drag = useRef<{
-    pointerId: number;
-    axisWorld: Vector3;
-    world0: Vector3;
-    captureTarget: HTMLElement;
-  } | null>(null);
-
-  const releaseCapture = useCallback((pointerId: number) => {
-    const cap = drag.current?.captureTarget;
-    if (!cap) return;
-    try {
-      cap.releasePointerCapture?.(pointerId);
-    } catch {
-      //
-    }
-  }, []);
-
-  const finalizeZOnBlur = useCallback(() => {
-    const parsed = Number(zDraft);
-    if (Number.isFinite(parsed)) {
-      onChange(new Vector3(position.x, position.y, parsed));
-    } else {
-      setZDraft(position.z.toString());
-    }
-  }, [onChange, position.x, position.y, position.z, zDraft]);
+  const finishDrag = useCallback(
+    (pointerId: number, commit: boolean) => {
+      const d = drag.current;
+      if (!d || d.pointerId !== pointerId) return;
+      releaseCapture(d.captureTarget, pointerId);
+      drag.current = null;
+      setGuide(null);
+      setDragLocal((prev) => {
+        if (commit && prev) onChange(prev);
+        return null;
+      });
+    },
+    [onChange]
+  );
 
   const onPointerDown = useCallback(
     (e: ThreeEvent<PointerEvent>) => {
@@ -157,18 +160,16 @@ const ControlPoint: React.FC<{
       if (!mesh || !parent) return;
 
       parent.updateWorldMatrix(true, true);
-      const axisWorld = AXIS[localConstraint].clone().transformDirection(parent.matrixWorld).normalize();
-
-      const world0 = new Vector3();
-      mesh.getWorldPosition(world0);
-
+      const world0 = mesh.getWorldPosition(new Vector3());
+      const axisWorld = axisWorldInParent(parent, constraint);
       const captureTarget = e.target as HTMLElement;
-      drag.current = { pointerId: e.pointerId, axisWorld, world0, captureTarget };
-      setConstraintGuide({ world0: world0.clone(), axisWorld: axisWorld.clone() });
+
+      drag.current = { pointerId: e.pointerId, world0, axisWorld, captureTarget };
+      setGuide({ world0: world0.clone(), axisWorld: axisWorld.clone() });
       setDragLocal(null);
       captureTarget.setPointerCapture?.(e.pointerId);
     },
-    [localConstraint]
+    [constraint]
   );
 
   const onPointerMove = useCallback((e: ThreeEvent<PointerEvent>) => {
@@ -176,207 +177,129 @@ const ControlPoint: React.FC<{
     if (!d || e.pointerId !== d.pointerId || (e.buttons & 1) === 0) return;
     e.stopPropagation();
 
-    const mesh = meshRef.current;
-    const parent = mesh?.parent;
-    if (!mesh || !parent) return;
+    const parent = meshRef.current?.parent;
+    if (!parent) return;
 
-    const world1 = new Vector3();
-    closestPointOnLineToRay(d.world0, d.axisWorld, e.ray.origin, e.ray.direction, world1);
-
-    const local = world1.clone();
-    parent.worldToLocal(local);
-    setDragLocal(local);
+    if (dragPositionOnAxis(d, e.ray, parent, TMP.hit)) setDragLocal(TMP.hit.clone());
   }, []);
-
-  const endDragCommit = useCallback(
-    (pointerId: number) => {
-      if (drag.current?.pointerId !== pointerId) return;
-      releaseCapture(pointerId);
-      drag.current = null;
-      setConstraintGuide(null);
-      setDragLocal((prev) => {
-        if (prev) onChange(prev);
-        return null;
-      });
-    },
-    [onChange, releaseCapture]
-  );
-
-  const endDragCancel = useCallback(
-    (pointerId: number) => {
-      if (drag.current?.pointerId !== pointerId) return;
-      releaseCapture(pointerId);
-      drag.current = null;
-      setConstraintGuide(null);
-      setDragLocal(null);
-    },
-    [releaseCapture]
-  );
 
   const onPointerUp = useCallback(
     (e: ThreeEvent<PointerEvent>) => {
       e.stopPropagation();
-      endDragCommit(e.pointerId);
+      finishDrag(e.pointerId, true);
     },
-    [endDragCommit]
+    [finishDrag]
   );
 
   const onPointerCancel = useCallback(
     (e: ThreeEvent<PointerEvent>) => {
       e.stopPropagation();
-      endDragCancel(e.pointerId);
+      finishDrag(e.pointerId, false);
     },
-    [endDragCancel]
+    [finishDrag]
   );
 
   useEffect(() => {
-    if (!constraintGuide) return;
-    const onKeyDown = (ev: KeyboardEvent) => {
+    if (!guide) return;
+    const onEscape = (ev: globalThis.KeyboardEvent) => {
       if (ev.key !== 'Escape') return;
       const pid = drag.current?.pointerId;
-      if (pid === undefined) return;
-      endDragCancel(pid);
+      if (pid !== undefined) finishDrag(pid, false);
     };
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [constraintGuide, endDragCancel]);
-
-  const effective = dragLocal ?? position;
-
-  let linePoints: [number, number, number][] | null = null;
-  if (constraintGuide && meshRef.current?.parent) {
-    const parent = meshRef.current.parent;
-    parent.updateWorldMatrix(true, true);
-    const inv = new Matrix4().copy(parent.matrixWorld).invert();
-    const { world0: oW, axisWorld: uW } = constraintGuide;
-    const originLocal = oW.clone().applyMatrix4(inv);
-    const axisLocal = uW.clone().transformDirection(inv).normalize();
-    const a = originLocal.clone().addScaledVector(axisLocal, -CONSTRAINT_LINE_HALF_LOCAL);
-    const b = originLocal.clone().addScaledVector(axisLocal, CONSTRAINT_LINE_HALF_LOCAL);
-    linePoints = [
-      [a.x, a.y, a.z],
-      [b.x, b.y, b.z]
-    ];
-  }
+    window.addEventListener('keydown', onEscape);
+    return () => window.removeEventListener('keydown', onEscape);
+  }, [guide, finishDrag]);
 
   useFrame(({ camera, size }) => {
     const mesh = meshRef.current;
     if (!mesh) return;
     mesh.updateWorldMatrix(true, false);
-    mesh.getWorldPosition(SCREEN_SPHERE_MESH_POS);
-    camera.getWorldPosition(SCREEN_SPHERE_CAM_POS);
-    const dist = SCREEN_SPHERE_MESH_POS.distanceTo(SCREEN_SPHERE_CAM_POS);
-    let worldRadius: number;
-    if (camera instanceof PerspectiveCamera) {
-      const vFov = (camera.fov * Math.PI) / 180;
-      worldRadius = (screenRadiusPx * 2 * dist * Math.tan(vFov / 2)) / (size.height * CONTROL_POINT_GEOMETRY_RADIUS);
-    } else if (camera instanceof OrthographicCamera) {
-      const frustumH = (camera.top - camera.bottom) / camera.zoom;
-      worldRadius = (screenRadiusPx * frustumH) / (size.height * CONTROL_POINT_GEOMETRY_RADIUS);
-    } else {
-      worldRadius = CONTROL_POINT_GEOMETRY_RADIUS;
-    }
-    mesh.scale.setScalar(worldRadius);
+    mesh.scale.setScalar(screenSpaceSphereScale(mesh, camera, size, screenRadiusPx));
   });
 
-  const onZInputKeyDown = (e: ReactKeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      zInputRef.current?.blur();
-      return;
-    }
-    if (e.key === 'Escape') {
-      e.preventDefault();
-      e.stopPropagation();
-      setZDraft(position.z.toString());
-      skipZCommitOnBlurRef.current = true;
-      zInputRef.current?.blur();
-    }
-    if (e.key === 'x') setLcoalConstraint('x');
-    if (e.key === 'y') setLcoalConstraint('y');
-    if (e.key === 'z') setLcoalConstraint('z');
-  };
+  const linePoints =
+    interacting && meshRef.current?.parent
+      ? guide
+        ? constraintLineLocal(meshRef.current.parent, guide.world0, guide.axisWorld)
+        : constraintLineLocal(
+            meshRef.current.parent,
+            meshRef.current.getWorldPosition(TMP.mesh),
+            axisWorldInParent(meshRef.current.parent, constraint)
+          )
+      : null;
 
   return (
     <>
-      {linePoints && (
-        <Line
-          points={linePoints}
-          color="#f3d5a3"
-          lineWidth={1}
-          dashed={false}
-          depthTest={false}
-          renderOrder={10}
-          opacity={0.5}
-          transparent
-        />
-      )}
+      {linePoints && <ConstraintGuideLine points={linePoints} />}
       <mesh
         ref={meshRef}
-        position={[effective.x, effective.y, effective.z]}
+        position={display}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerCancel}
       >
-        <sphereGeometry args={[CONTROL_POINT_GEOMETRY_RADIUS, 20, 20]} />
+        <sphereGeometry args={[SPHERE_GEOMETRY_RADIUS, 20, 20]} />
         <meshStandardMaterial color="#fbf0df" metalness={0.15} roughness={0.55} />
-        {constraint === 'z' && (
-          <Html
-            transform={false}
-            calculatePosition={calculateZInputScreenPosition}
-            style={{ pointerEvents: 'auto' }}
-            zIndexRange={[100, 0]}
-            occlude={false}
-          >
-            <input
-              ref={zInputRef}
-              type="number"
-              step="any"
-              className="box-border w-[4.5rem] rounded border border-white/25 bg-black/70 px-1.5 text-[11px] leading-none text-white tabular-nums outline-none focus:border-amber-300/80"
-              style={{ height: Z_INPUT_SCREEN_HEIGHT_PX }}
-              value={zDraft}
-              onPointerDown={(e) => e.stopPropagation()}
-              onPointerUp={(e) => e.stopPropagation()}
-              onClick={(e) => e.stopPropagation()}
-              onChange={(e) => setZDraft(e.target.value)}
-              onFocus={() => setZInputFocused(true)}
-              onBlur={() => {
-                setZInputFocused(false);
-                if (skipZCommitOnBlurRef.current) {
-                  skipZCommitOnBlurRef.current = false;
-                  return;
-                }
-                finalizeZOnBlur();
-              }}
-              onKeyDown={onZInputKeyDown}
-            />
-          </Html>
-        )}
+        <Html
+          transform={false}
+          calculatePosition={axisInputScreenPosition}
+          style={{ pointerEvents: 'auto' }}
+          zIndexRange={[100, 0]}
+          occlude={false}
+        >
+          <NumericInput
+            inputRef={axisInputRef}
+            value={display[constraint]}
+            onChange={commitAxis}
+            step={0.001}
+            onFocus={() => setInputFocused(true)}
+            onBlur={() => {
+              setInputFocused(false);
+              if (skipCommitOnBlur.current) {
+                skipCommitOnBlur.current = false;
+                return false;
+              }
+            }}
+            onKeyDown={(e) => {
+              if (e.key !== 'Escape') return;
+              e.preventDefault();
+              e.stopPropagation();
+              skipCommitOnBlur.current = true;
+              axisInputRef.current?.blur();
+            }}
+          />
+        </Html>
       </mesh>
     </>
   );
 };
 
-const replacePositionInArray = (array: Vector3[], index: number, newPosition: Vector3) =>
-  array.map((p, i) => (i === index ? newPosition.clone() : p.clone()));
-
-const CONSTRAINT = 'z';
+function dragPositionOnAxis(
+  drag: DragState,
+  ray: { origin: Vector3; direction: Vector3 },
+  parent: Object3D,
+  out: Vector3
+): boolean {
+  const axis = { origin: drag.world0, direction: drag.axisWorld };
+  const hit = infiniteLineIntersection(axis, { origin: ray.origin, direction: ray.direction });
+  if (!hit) return false;
+  out.copy(evaluateParameterAt(axis, hit[0]));
+  parent.worldToLocal(out);
+  return true;
+}
 
 export const ControlPoints: React.FC<{
   positions: Vector3[];
-  onChange: (newPositions: Vector3[]) => void;
-  /** Apparent sphere radius in CSS pixels (default 5). */
+  onChange: (positions: Vector3[]) => void;
   screenRadiusPx?: number;
-  constraint?: 'x' | 'y' | 'z';
-}> = ({ positions, onChange, screenRadiusPx = CONTROL_POINT_SCREEN_RADIUS_PX, constraint = CONSTRAINT }) => (
+}> = ({ positions, onChange, screenRadiusPx = DEFAULT_SCREEN_RADIUS_PX }) => (
   <group>
-    {positions.map((pos, index) => (
+    {positions.map((pos, i) => (
       <ControlPoint
-        key={index}
-        constraint={constraint}
+        key={i}
         position={pos}
-        onChange={(newPosition) => onChange(replacePositionInArray(positions, index, newPosition))}
+        onChange={(p) => onChange(positions.map((v, j) => (j === i ? p.clone() : v.clone())))}
         screenRadiusPx={screenRadiusPx}
       />
     ))}

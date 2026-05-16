@@ -1,9 +1,13 @@
 import { clamp, clampInt } from '@/lib/grid-shell/utils';
-import { Ref, useEffect, useState } from 'react';
+import { type KeyboardEvent, type Ref, useEffect, useState } from 'react';
 import { LabelWrapper } from './LabelWrapper';
 
-const parseValue = (value: string, min: number = 0.05, max: number = 5, isInteger: boolean = false) =>
-  (isInteger ? clampInt : clamp)(Number(value), min, max);
+const parseValue = (value: string, min?: number, max?: number, isInteger: boolean = false) => {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return null;
+  if (min === undefined || max === undefined) return n;
+  return (isInteger ? clampInt : clamp)(n, min, max);
+};
 
 export const NumericInput: React.FC<{
   isInteger?: boolean;
@@ -14,12 +18,22 @@ export const NumericInput: React.FC<{
   onChange: (value: number) => void;
   inputRef?: Ref<HTMLInputElement>;
   label?: string;
-}> = ({ value, onChange, inputRef, step = 1, isInteger = false, label, min, max }) => {
+  onFocus?: () => void;
+  /** Return `false` to skip commit on blur (e.g. Escape). */
+  onBlur?: () => boolean | void;
+  onKeyDown?: (e: KeyboardEvent<HTMLInputElement>) => void;
+}> = ({ value, onChange, inputRef, step = 1, isInteger = false, label, min, max, onFocus, onBlur, onKeyDown }) => {
   const [internalValue, setInternalValue] = useState<string>(value.toString());
 
   useEffect(() => {
     setInternalValue(value.toString());
   }, [value]);
+
+  const commit = () => {
+    const parsed = parseValue(internalValue, min, max, isInteger);
+    if (parsed !== null) onChange(parsed);
+    else setInternalValue(value.toString());
+  };
 
   return (
     <LabelWrapper label={label}>
@@ -29,9 +43,25 @@ export const NumericInput: React.FC<{
         ref={inputRef}
         value={internalValue}
         onChange={(e) => setInternalValue(e.target.value)}
-        onBlur={() => onChange(parseValue(internalValue, min, max, isInteger))}
-        onClick={(e) => (onChange(parseValue(internalValue, min, max, isInteger)), e.stopPropagation())}
-        onKeyDown={(e) => e.key === 'Enter' && onChange(parseValue(internalValue, min, max, isInteger))}
+        onFocus={onFocus}
+        onBlur={() => {
+          if (onBlur?.() === false) {
+            setInternalValue(value.toString());
+            return;
+          }
+          commit();
+        }}
+        onPointerDown={(e) => e.stopPropagation()}
+        onPointerUp={(e) => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => {
+          onKeyDown?.(e);
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            commit();
+            (e.target as HTMLInputElement).blur();
+          }
+        }}
         min={min}
         max={max}
         step={step}

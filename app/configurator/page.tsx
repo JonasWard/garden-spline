@@ -13,6 +13,7 @@ import { ViewSettings, ViewSettingsUI } from '@/components/ui/configurator/ViewS
 import { ConfiguratorPanel } from '@/components/ui/configurator/ConfiguratorPanel';
 import { BeamSettings } from '@/components/ui/configurator/BeamSettings';
 import { BeamType, DEFAULT_BEAM } from '@/lib/components/types/beam';
+import { ControlPointSettings } from '@/components/ui/configurator/ControlPointSettings';
 
 export default function SimpleGridShellPage() {
   const [axisType, setAxisType] = useState<AxisType>(DEFAULT_AXIS_BASES['tri']);
@@ -57,6 +58,7 @@ export default function SimpleGridShellPage() {
           setReferenceSurface={onReferenceSurfaceBaseChange}
         />
         <ViewSettingsUI viewSettings={viewSettings} setViewSettings={setViewSettings} />
+        <ControlPointSettings />
         <BeamSettings beam={beam} setBeamType={setBeamType} />
       </ConfiguratorPanel>
     </div>
