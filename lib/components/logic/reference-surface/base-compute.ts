@@ -23,10 +23,16 @@ export const getUVCorners = (referenceSurface: ReferenceSurfaceBase): Vector2[] 
   );
 };
 
-export const getDefaultControlPoints = ({ m, n, dX, dY }: ReferenceSurfaceBase): Vector3[] =>
-  [...new Array(n + 1)]
-    .map((_, i) => [...new Array(m + 1)].flatMap((_, j) => new Vector3((i - m * 0.5) * dX, (j - m * 0.5) * dY, 0)))
-    .flat();
+/** `(n+1)×(m+1)` grid; flat index `j*(n+1)+i` matches `makeGridQuads(n+1, m+1)` in sample-surface. */
+export const getDefaultControlPoints = ({ m, n, dX, dY }: ReferenceSurfaceBase): Vector3[] => {
+  const pts: Vector3[] = [];
+  for (let j = 0; j <= m; j++) {
+    for (let i = 0; i <= n; i++) {
+      pts.push(new Vector3((i - n * 0.5) * dX, (j - m * 0.5) * dY, 0));
+    }
+  }
+  return pts;
+};
 
 export const getUVBox = (rS: ReferenceSurfaceBase): UVBox => [getUVBottomLeft(rS), getUVTopRight(rS)];
 

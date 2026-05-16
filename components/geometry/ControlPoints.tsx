@@ -261,13 +261,6 @@ const ControlPoint: React.FC<{
                 return false;
               }
             }}
-            onKeyDown={(e) => {
-              if (e.key !== 'Escape') return;
-              e.preventDefault();
-              e.stopPropagation();
-              skipCommitOnBlur.current = true;
-              axisInputRef.current?.blur();
-            }}
           />
         </Html>
       </mesh>

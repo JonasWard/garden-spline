@@ -1,5 +1,5 @@
 import { clamp, clampInt } from '@/lib/grid-shell/utils';
-import { type KeyboardEvent, type Ref, useEffect, useState } from 'react';
+import { type Ref, useEffect, useState } from 'react';
 import { LabelWrapper } from './LabelWrapper';
 
 const parseValue = (value: string, min?: number, max?: number, isInteger: boolean = false) => {
@@ -21,8 +21,7 @@ export const NumericInput: React.FC<{
   onFocus?: () => void;
   /** Return `false` to skip commit on blur (e.g. Escape). */
   onBlur?: () => boolean | void;
-  onKeyDown?: (e: KeyboardEvent<HTMLInputElement>) => void;
-}> = ({ value, onChange, inputRef, step = 1, isInteger = false, label, min, max, onFocus, onBlur, onKeyDown }) => {
+}> = ({ value, onChange, inputRef, step = 1, isInteger = false, label, min, max, onFocus, onBlur }) => {
   const [internalValue, setInternalValue] = useState<string>(value.toString());
 
   useEffect(() => {
@@ -51,11 +50,8 @@ export const NumericInput: React.FC<{
           }
           commit();
         }}
-        onPointerDown={(e) => e.stopPropagation()}
-        onPointerUp={(e) => e.stopPropagation()}
-        onClick={(e) => e.stopPropagation()}
+        onClick={() => commit()}
         onKeyDown={(e) => {
-          onKeyDown?.(e);
           if (e.key === 'Enter') {
             e.preventDefault();
             commit();

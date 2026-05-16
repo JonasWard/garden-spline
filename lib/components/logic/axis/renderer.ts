@@ -20,7 +20,7 @@ export {
   groupBaseAxisRaysByStackOrder
 } from './stack-group';
 
-/** Maps pattern-plane UV from {@link get2DVisualisation} into continuous surface indices `(u,v)` in `[0,n]×[0,m]`. */
+/** Pattern x → grid `u` (columns, `n` spans); pattern y → grid `v` (rows, `m` spans). */
 export const patternUvToSurfaceGridUv = (uv: Vector2, { dX, dY, n, m }: ReferenceSurface): Vector2 =>
   new Vector2(uv.x / dX + n * 0.5, uv.y / dY + m * 0.5);
 
