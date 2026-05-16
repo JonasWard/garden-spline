@@ -11,7 +11,6 @@
   padding: 12px;
   border-radius: 8px;
   gap: 8px;
-  padding: 12px;
 }
 
 .configurator-panel-numeric-input {
@@ -19,4 +18,89 @@
   border: 1px solid white;
   border-radius: 6px;
   padding: 12px 8px;
+}
+
+.configurator-panel-intro {
+  margin: 0;
+  font-size: 0.875rem;
+  color: rgb(255 255 255 / 0.7);
+}
+
+.configurator-panel-shell {
+  position: fixed;
+  z-index: 100;
+  top: 1rem;
+  right: 1rem;
+  width: 3rem;
+  max-height: 3rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #1a1a1ae6;
+  backdrop-filter: blur(8px);
+  border: 2px solid #fbf0df;
+  transition: width 0.4s, max-height 0.4s, border-radius 0.4s;
+}
+
+.configurator-panel-shell.is-open {
+  width: min(360px, 92vw);
+  max-height: 90svh;
+  border-radius: 1rem;
+}
+
+.configurator-panel-toggle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  height: 3rem;
+  padding: 0 0.75rem;
+  border: 0;
+  background: none;
+  color: #fbf0df;
+  cursor: pointer;
+}
+
+.configurator-panel-shell:not(.is-open) .configurator-panel-toggle {
+  justify-content: center;
+  padding: 0;
+}
+
+.configurator-panel-toggle__title {
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  transition: opacity 0.25s, max-width 0.4s;
+}
+
+.configurator-panel-shell:not(.is-open) .configurator-panel-toggle__title {
+  opacity: 0;
+  max-width: 0;
+}
+
+.configurator-panel-cog {
+  width: 1.25rem;
+  height: 1.25rem;
+  flex-shrink: 0;
+}
+
+.configurator-panel-body {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.4s;
+}
+
+.configurator-panel-shell.is-open .configurator-panel-body {
+  grid-template-rows: 1fr;
+}
+
+.configurator-panel-body > .configurator-panel {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.configurator-panel-shell.is-open .configurator-panel-body > .configurator-panel {
+  overflow-y: auto;
+  max-height: calc(90svh - 3rem);
+  padding: 0 1.25rem 1.25rem;
 }

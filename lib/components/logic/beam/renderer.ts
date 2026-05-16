@@ -1,6 +1,7 @@
 import { BufferGeometry, Float32BufferAttribute, Vector3 } from 'three';
 
-import { get2DVisualisation, patternUvToSurfaceGridUv } from '../axis/renderer';
+import { getAxisStackGroups, getStackBeamNormalOffset } from '../axis/stack-group';
+import { patternUvToSurfaceGridUv } from '../axis/renderer';
 import { createReferenceSurfaceSampler } from '../reference-surface/catmull-clark/sample-surface';
 import type { AxisLine, AxisType } from '../../types/axis';
 import type { BeamType } from '../../types/beam';
@@ -10,6 +11,29 @@ import {
   DEFAULT_AXIS_3D_SURFACE_SUBDIVISION_LEVELS,
   sampleLiftedAxisSegmentOnSurface
 } from './generate-axis-beam-geometry';
+
+function appendLinesAsBeams(
+  lines: AxisLine[],
+  referenceSurface: ReferenceSurface,
+  sampler: ReturnType<typeof createReferenceSurfaceSampler>,
+  posScratch: Vector3,
+  nScratch: Vector3,
+  halfW: number,
+  halfH: number,
+  normalOffset: number,
+  positions: number[],
+  indices: number[],
+  vertexBase: number
+): number {
+  for (const [a, b] of lines.map(
+    ([p0, p1]) =>
+      [patternUvToSurfaceGridUv(p0, referenceSurface), patternUvToSurfaceGridUv(p1, referenceSurface)] as AxisLine
+  )) {
+    const samples = sampleLiftedAxisSegmentOnSurface(a, b, sampler, posScratch, nScratch);
+    vertexBase = appendBeamQuadStripGeometry(samples, halfW, halfH, positions, indices, vertexBase, normalOffset);
+  }
+  return vertexBase;
+}
 
 /**
  * Extruded rectangular beam along lifted grid axes: cross-section spanned by **surface normal** `N` (height) and
@@ -26,21 +50,49 @@ export function buildAxisBeamBufferGeometry(
   const posScratch = new Vector3();
   const nScratch = new Vector3();
 
-  const lines2d = get2DVisualisation(axis, referenceSurface).map(
-    ([a, b]) =>
-      [patternUvToSurfaceGridUv(a, referenceSurface), patternUvToSurfaceGridUv(b, referenceSurface)] as AxisLine
-  );
-
   const halfW = beam.width * 0.5;
   const halfH = beam.height * 0.5;
+  const groups = getAxisStackGroups(axis, referenceSurface);
 
   const positions: number[] = [];
   const indices: number[] = [];
   let vertexBase = 0;
 
-  for (const [a, b] of lines2d) {
-    const samples = sampleLiftedAxisSegmentOnSurface(a, b, sampler, posScratch, nScratch);
-    vertexBase = appendBeamQuadStripGeometry(samples, halfW, halfH, positions, indices, vertexBase);
+  if (beam.type === 'inline') {
+    for (const { lines } of groups) {
+      vertexBase = appendLinesAsBeams(
+        lines,
+        referenceSurface,
+        sampler,
+        posScratch,
+        nScratch,
+        halfW,
+        halfH,
+        0,
+        positions,
+        indices,
+        vertexBase
+      );
+    }
+  } else {
+    for (let stackType = 0; stackType < beam.count; stackType++) {
+      for (const { lines, orderInStack } of groups) {
+        const normalOffset = getStackBeamNormalOffset(axis, stackType, orderInStack, beam.height, beam.up);
+        vertexBase = appendLinesAsBeams(
+          lines,
+          referenceSurface,
+          sampler,
+          posScratch,
+          nScratch,
+          halfW,
+          halfH,
+          normalOffset,
+          positions,
+          indices,
+          vertexBase
+        );
+      }
+    }
   }
 
   const geom = new BufferGeometry();

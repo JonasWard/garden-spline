@@ -100,7 +100,9 @@ export function appendBeamQuadStripGeometry(
   halfHeight: number,
   positions: number[],
   indices: number[],
-  vertexBase: number
+  vertexBase: number,
+  /** Displaces the strip along surface normal (stack layers). */
+  normalOffset = 0
 ): number {
   const count = samples.length;
   if (count < 2) return vertexBase;
@@ -118,7 +120,7 @@ export function appendBeamQuadStripGeometry(
     for (const [sx, sy] of RING_OFFSETS) {
       const wb = sx * halfWidth;
       const hn = sy * halfHeight;
-      corner.copy(P).addScaledVector(B, wb).addScaledVector(N, hn);
+      corner.copy(P).addScaledVector(B, wb).addScaledVector(N, hn + normalOffset);
       positions.push(corner.x, corner.y, corner.z);
     }
   }

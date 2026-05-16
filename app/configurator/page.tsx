@@ -12,13 +12,13 @@ import { AxisSettings } from '@/components/ui/configurator/AxisSettings';
 import { ViewSettings, ViewSettingsUI } from '@/components/ui/configurator/ViewSettings';
 import { ConfiguratorPanel } from '@/components/ui/configurator/ConfiguratorPanel';
 import { BeamSettings } from '@/components/ui/configurator/BeamSettings';
-import { BeamType } from '@/lib/components/types/beam';
+import { BeamType, DEFAULT_BEAM } from '@/lib/components/types/beam';
 
 export default function SimpleGridShellPage() {
   const [axisType, setAxisType] = useState<AxisType>(DEFAULT_AXIS_BASES['tri']);
   const [referenceSurfaceBase, setReferenceSurfaceBase] = useState<ReferenceSurfaceBase>(DEFAULT_SURFACE_BASE);
   const [controlPoints, setControlPoints] = useState<Vector3[]>(getDefaultControlPoints(referenceSurfaceBase));
-  const [beam, setBeamType] = useState<BeamType>({ width: 0.05, height: 0.05 });
+  const [beam, setBeamType] = useState<BeamType>(DEFAULT_BEAM['inline']);
 
   const [viewSettings, setViewSettings] = useState<ViewSettings>({
     showAxis: true,

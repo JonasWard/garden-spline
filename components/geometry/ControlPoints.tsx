@@ -110,6 +110,8 @@ const ControlPoint: React.FC<{
   const [zInputFocused, setZInputFocused] = useState(false);
   const [zDraft, setZDraft] = useState(() => position.z.toString());
 
+  const [localConstraint, setLcoalConstraint] = useState<'x' | 'y' | 'z'>(constraint);
+
   const activeCommand = constraintGuide !== null || zInputFocused;
 
   useEffect(() => {
@@ -155,7 +157,7 @@ const ControlPoint: React.FC<{
       if (!mesh || !parent) return;
 
       parent.updateWorldMatrix(true, true);
-      const axisWorld = AXIS[constraint].clone().transformDirection(parent.matrixWorld).normalize();
+      const axisWorld = AXIS[localConstraint].clone().transformDirection(parent.matrixWorld).normalize();
 
       const world0 = new Vector3();
       mesh.getWorldPosition(world0);
@@ -166,28 +168,25 @@ const ControlPoint: React.FC<{
       setDragLocal(null);
       captureTarget.setPointerCapture?.(e.pointerId);
     },
-    [constraint]
+    [localConstraint]
   );
 
-  const onPointerMove = useCallback(
-    (e: ThreeEvent<PointerEvent>) => {
-      const d = drag.current;
-      if (!d || e.pointerId !== d.pointerId || (e.buttons & 1) === 0) return;
-      e.stopPropagation();
+  const onPointerMove = useCallback((e: ThreeEvent<PointerEvent>) => {
+    const d = drag.current;
+    if (!d || e.pointerId !== d.pointerId || (e.buttons & 1) === 0) return;
+    e.stopPropagation();
 
-      const mesh = meshRef.current;
-      const parent = mesh?.parent;
-      if (!mesh || !parent) return;
+    const mesh = meshRef.current;
+    const parent = mesh?.parent;
+    if (!mesh || !parent) return;
 
-      const world1 = new Vector3();
-      closestPointOnLineToRay(d.world0, d.axisWorld, e.ray.origin, e.ray.direction, world1);
+    const world1 = new Vector3();
+    closestPointOnLineToRay(d.world0, d.axisWorld, e.ray.origin, e.ray.direction, world1);
 
-      const local = world1.clone();
-      parent.worldToLocal(local);
-      setDragLocal(local);
-    },
-    []
-  );
+    const local = world1.clone();
+    parent.worldToLocal(local);
+    setDragLocal(local);
+  }, []);
 
   const endDragCommit = useCallback(
     (pointerId: number) => {
@@ -270,8 +269,7 @@ const ControlPoint: React.FC<{
     let worldRadius: number;
     if (camera instanceof PerspectiveCamera) {
       const vFov = (camera.fov * Math.PI) / 180;
-      worldRadius =
-        (screenRadiusPx * 2 * dist * Math.tan(vFov / 2)) / (size.height * CONTROL_POINT_GEOMETRY_RADIUS);
+      worldRadius = (screenRadiusPx * 2 * dist * Math.tan(vFov / 2)) / (size.height * CONTROL_POINT_GEOMETRY_RADIUS);
     } else if (camera instanceof OrthographicCamera) {
       const frustumH = (camera.top - camera.bottom) / camera.zoom;
       worldRadius = (screenRadiusPx * frustumH) / (size.height * CONTROL_POINT_GEOMETRY_RADIUS);
@@ -294,6 +292,9 @@ const ControlPoint: React.FC<{
       skipZCommitOnBlurRef.current = true;
       zInputRef.current?.blur();
     }
+    if (e.key === 'x') setLcoalConstraint('x');
+    if (e.key === 'y') setLcoalConstraint('y');
+    if (e.key === 'z') setLcoalConstraint('z');
   };
 
   return (

@@ -7,14 +7,18 @@ import {
   DEFAULT_AXIS_3D_SURFACE_SUBDIVISION_LEVELS
 } from '../beam/generate-axis-beam-geometry';
 import { createReferenceSurfaceSampler } from '../reference-surface/catmull-clark/sample-surface';
-import { populateUVBox } from './populate-uv-box';
-import { getBaseAxisRays } from './base-compute';
+import { getAxisStackGroups } from './stack-group';
 
-export const get2DVisualisation = (axis: AxisType, referenceSurface: ReferenceSurfaceBase): AxisLine[] => {
-  const baseRays = getBaseAxisRays(axis);
-  const allRays = baseRays.flatMap((ray) => populateUVBox(ray, referenceSurface));
-  return allRays;
-};
+export const get2DVisualisation = (axis: AxisType, referenceSurface: ReferenceSurfaceBase): AxisLine[] =>
+  getAxisStackGroups(axis, referenceSurface).flatMap((g) => g.lines);
+
+export {
+  get2DVisualisationByOrderSlot,
+  getAxisStackGroups,
+  getSlotsPerStackLayer,
+  getStackBeamNormalOffset,
+  groupBaseAxisRaysByStackOrder
+} from './stack-group';
 
 /** Maps pattern-plane UV from {@link get2DVisualisation} into continuous surface indices `(u,v)` in `[0,n]×[0,m]`. */
 export const patternUvToSurfaceGridUv = (uv: Vector2, { dX, dY, n, m }: ReferenceSurface): Vector2 =>

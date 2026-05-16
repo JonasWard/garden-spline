@@ -48,3 +48,12 @@ export const DEFAULT_AXIS_BASES = {
 
 export type AxisLine = [Vector2, Vector2];
 export type AxisRay = { origin: Vector2; direction: Vector2; spacingDirection: Vector2 };
+
+/** One base axis ray with its in-stack slot and populated UV segments. */
+export type AxisStackGroup = {
+  /** Position along the normal within one stack layer (`STACK_BEAM_ORDER[rayIndex]`). */
+  orderInStack: number;
+  rayIndex: number;
+  ray: AxisRay;
+  lines: AxisLine[];
+};

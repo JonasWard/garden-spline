@@ -2,6 +2,7 @@ import type { AxisType } from '@/lib/components/types/axis';
 import { DEFAULT_AXIS_BASES } from '@/lib/components/types/axis';
 import { Select } from '../shared/Select';
 import { NumericInput } from '../shared/NumericInput';
+import { trimType } from '@/lib/components/react-helpers/type-stripper';
 
 export type AxisSettingsProps = {
   axis: AxisType;
@@ -13,12 +14,6 @@ type OctagonalType = Extract<AxisType, { type: 'octagonal' }>;
 
 const inputClass =
   'bg-black/30 border border-white/20 rounded-lg px-3 py-2 outline-none focus:border-[#f3d5a3] text-white w-full';
-
-const trimType = (axis: AxisType): Omit<AxisType, 'type'> => {
-  const s = { ...axis };
-  delete (s as Omit<AxisType, 'type'> & { type?: AxisType['type'] }).type;
-  return s;
-};
 
 const axisPatternOptions: { value: AxisType['type']; label: string }[] = [
   { value: 'tri', label: 'Triangular' },

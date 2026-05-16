@@ -98,3 +98,11 @@ export const getBaseAxisRays = (axis: AxisType): AxisRay[] => {
       return getBaseRayOctagonal(axis);
   }
 };
+
+/** In-stack normal slot per base ray (0 = innermost). Each direction is repeated for every stack type. */
+export const STACK_BEAM_ORDER: Record<AxisType['type'], number[]> = {
+  tri: [0, 1, 2],
+  quad: [0, 1, 0, 1],
+  hex: [0, 1, 2],
+  octagonal: [1, 2, 0, 3, 0, 3]
+};
