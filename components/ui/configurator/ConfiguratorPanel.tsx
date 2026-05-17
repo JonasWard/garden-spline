@@ -1,6 +1,8 @@
 'use client';
 
-import { useId, useState } from 'react';
+import { useId, useLayoutEffect, useState } from 'react';
+
+const SETTINGS_PANEL_OPEN_MIN_WIDTH_PX = 800;
 
 import './configurator-panel.css';
 
@@ -22,23 +24,60 @@ const SettingsCog = () => (
   </svg>
 );
 
-export const ConfiguratorPanel: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [open, setOpen] = useState(true);
+export const ConfiguratorPanel: React.FC<{ children: React.ReactNode; shareUrl: string }> = ({
+  children,
+  shareUrl
+}) => {
+  const [open, setOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
   const contentId = useId();
+
+  useLayoutEffect(() => {
+    setOpen(window.innerWidth >= SETTINGS_PANEL_OPEN_MIN_WIDTH_PX);
+  }, []);
+
+  const onCopyUrl = async () => {
+    if (!shareUrl) return;
+    const fullUrl = shareUrl.startsWith('http') ? shareUrl : `${window.location.origin}${shareUrl}`;
+    try {
+      await navigator.clipboard.writeText(fullUrl);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2000);
+    } catch {
+      window.prompt('Copy this URL:', fullUrl);
+    }
+  };
 
   return (
     <div className={`configurator-panel-shell${open ? ' is-open' : ''}`}>
-      <button
-        type="button"
-        className="configurator-panel-toggle"
-        onClick={() => setOpen((v) => !v)}
-        aria-expanded={open}
-        aria-controls={contentId}
-        aria-label={open ? 'Close settings' : 'Open settings'}
-      >
-        {open ? <span className="configurator-panel-toggle__title">Simple grid shell</span> : null}
-        <SettingsCog />
-      </button>
+      <div className="configurator-panel-header">
+        <button
+          type="button"
+          className="configurator-panel-copy"
+          onClick={onCopyUrl}
+          disabled={!shareUrl}
+          title={
+            shareUrl
+              ? shareUrl.startsWith('http')
+                ? shareUrl
+                : `${typeof window !== 'undefined' ? window.location.origin : ''}${shareUrl}`
+              : 'URL not ready'
+          }
+        >
+          {copied ? 'Copied' : 'Copy URL'}
+        </button>
+        <button
+          type="button"
+          className="configurator-panel-toggle"
+          onClick={() => setOpen((v) => !v)}
+          aria-expanded={open}
+          aria-controls={contentId}
+          aria-label={open ? 'Close settings' : 'Open settings'}
+        >
+          {open ? <span className="configurator-panel-toggle__title">Simple grid shell</span> : null}
+          <SettingsCog />
+        </button>
+      </div>
 
       <div id={contentId} className="configurator-panel-body" aria-hidden={!open} inert={!open || undefined}>
         <div className="configurator-panel">

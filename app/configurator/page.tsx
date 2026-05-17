@@ -1,31 +1,134 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
 import { GridShellScene } from '@/components/GridShellScene';
-import { AxisType, DEFAULT_AXIS_BASES } from '@/lib/components/types/axis';
-import { DEFAULT_SURFACE_BASE, ReferenceSurfaceBase } from '@/lib/components/types/reference-surface';
+import type { ReferenceSurfaceBase } from '@/lib/components/types/reference-surface';
 import { Vector3 } from 'three';
-import { getDefaultControlPoints } from '@/lib/components/logic/reference-surface/base-compute';
+import {
+  absoluteToControlPointDeltas,
+  emptyControlPointDeltas,
+  resolveControlPoints
+} from '@/lib/components/logic/reference-surface/control-point-deltas';
 import { ReferenceSurfaceSettings } from '@/components/ui/configurator/ReferenceSurfaceSettings';
 import { AxisSettings } from '@/components/ui/configurator/AxisSettings';
-import { DEFAULT_VIEW_SETTINGS, ViewSettings, ViewSettingsUI } from '@/components/ui/configurator/ViewSettings';
+import { ViewSettingsUI } from '@/components/ui/configurator/ViewSettings';
 import { ConfiguratorPanel } from '@/components/ui/configurator/ConfiguratorPanel';
 import { BeamSettings } from '@/components/ui/configurator/BeamSettings';
-import { BeamType, DEFAULT_BEAM } from '@/lib/components/types/beam';
 import { ControlPointSettings } from '@/components/ui/configurator/ControlPointSettings';
+import {
+  createDefaultConfiguratorState,
+  encodeConfiguratorState,
+  resolveConfiguratorStateFromEncoded,
+  type ConfiguratorState
+} from '@/components/ui/state-string/densing-state';
 
-export default function SimpleGridShellPage() {
-  const [axisType, setAxisType] = useState<AxisType>(DEFAULT_AXIS_BASES['tri']);
-  const [referenceSurfaceBase, setReferenceSurfaceBase] = useState<ReferenceSurfaceBase>(DEFAULT_SURFACE_BASE);
-  const [controlPoints, setControlPoints] = useState<Vector3[]>(getDefaultControlPoints(referenceSurfaceBase));
-  const [beam, setBeamType] = useState<BeamType>(DEFAULT_BEAM['inline']);
-  const [viewSettings, setViewSettings] = useState<ViewSettings>(DEFAULT_VIEW_SETTINGS);
+const URL_SYNC_DEBOUNCE_MS = 300;
+
+const applyConfiguratorState = (
+  loaded: ConfiguratorState,
+  setters: {
+    setAxisType: (v: ConfiguratorState['axisType']) => void;
+    setReferenceSurfaceBase: (v: ConfiguratorState['referenceSurfaceBase']) => void;
+    setControlPointDeltas: (v: ConfiguratorState['controlPointDeltas']) => void;
+    setBeamType: (v: ConfiguratorState['beam']) => void;
+    setViewSettings: (v: ConfiguratorState['viewSettings']) => void;
+  }
+) => {
+  setters.setAxisType(loaded.axisType);
+  setters.setReferenceSurfaceBase(loaded.referenceSurfaceBase);
+  setters.setControlPointDeltas(loaded.controlPointDeltas);
+  setters.setBeamType(loaded.beam);
+  setters.setViewSettings(loaded.viewSettings);
+};
+
+function ConfiguratorPageContent() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const [initialState] = useState(createDefaultConfiguratorState);
+  const [axisType, setAxisType] = useState(initialState.axisType);
+  const [referenceSurfaceBase, setReferenceSurfaceBase] = useState(initialState.referenceSurfaceBase);
+  const [controlPointDeltas, setControlPointDeltas] = useState(initialState.controlPointDeltas);
+  const [beam, setBeamType] = useState(initialState.beam);
+  const [viewSettings, setViewSettings] = useState(initialState.viewSettings);
+  const [urlHydrated, setUrlHydrated] = useState(false);
+  const [cameraFitKey, setCameraFitKey] = useState(0);
+
+  const controlPoints = useMemo(
+    () => resolveControlPoints(referenceSurfaceBase, controlPointDeltas),
+    [referenceSurfaceBase, controlPointDeltas]
+  );
+
+  const configuratorState = useMemo<ConfiguratorState>(
+    () => ({ axisType, referenceSurfaceBase, controlPointDeltas, beam, viewSettings }),
+    [axisType, referenceSurfaceBase, controlPointDeltas, beam, viewSettings]
+  );
+
+  const encodedState = useMemo(() => {
+    try {
+      return encodeConfiguratorState(configuratorState);
+    } catch {
+      return null;
+    }
+  }, [configuratorState]);
+
+  /** Path + query only (SSR-safe); origin is added when copying on the client. */
+  const shareUrl = useMemo(() => {
+    if (!encodedState) return '';
+    return `${pathname}?state=${encodeURIComponent(encodedState)}`;
+  }, [encodedState, pathname]);
+
+  useEffect(() => {
+    const loaded = resolveConfiguratorStateFromEncoded(searchParams.get('state'));
+    applyConfiguratorState(loaded, {
+      setAxisType,
+      setReferenceSurfaceBase,
+      setControlPointDeltas,
+      setBeamType,
+      setViewSettings
+    });
+    setUrlHydrated(true);
+    setCameraFitKey((k) => k + 1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- hydrate from URL once on mount
+  }, []);
+
+  useEffect(() => {
+    if (!urlHydrated || !encodedState) return;
+    const id = window.setTimeout(() => {
+      if (searchParams.get('state') === encodedState) return;
+      router.replace(`${pathname}?state=${encodeURIComponent(encodedState)}`, { scroll: false });
+    }, URL_SYNC_DEBOUNCE_MS);
+    return () => window.clearTimeout(id);
+  }, [urlHydrated, encodedState, pathname, router, searchParams]);
+
+  useEffect(() => {
+    if (!urlHydrated || !encodedState) return;
+    const onPopState = () => {
+      const encoded = new URLSearchParams(window.location.search).get('state');
+      if (!encoded || encoded === encodedState) return;
+      try {
+        applyConfiguratorState(resolveConfiguratorStateFromEncoded(encoded), {
+          setAxisType,
+          setReferenceSurfaceBase,
+          setControlPointDeltas,
+          setBeamType,
+          setViewSettings
+        });
+        setCameraFitKey((k) => k + 1);
+      } catch (e) {
+        console.error('Failed to load configurator state from URL:', e);
+      }
+    };
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, [urlHydrated, encodedState]);
 
   const onReferenceSurfaceBaseChange = useCallback(
     (referenceSurface: ReferenceSurfaceBase) => {
       setReferenceSurfaceBase(referenceSurface);
-      setControlPoints(getDefaultControlPoints(referenceSurface));
+      setControlPointDeltas(emptyControlPointDeltas(referenceSurface));
     },
     [setReferenceSurfaceBase]
   );
@@ -38,12 +141,13 @@ export default function SimpleGridShellPage() {
         axisType={axisType}
         beam={beam}
         viewSettings={viewSettings}
-        onControlPointsChange={(vs) => {
-          setControlPoints(vs as Vector3[]);
+        cameraFitKey={cameraFitKey}
+        onControlPointsChange={(positions: Vector3[]) => {
+          setControlPointDeltas(absoluteToControlPointDeltas(referenceSurfaceBase, positions));
         }}
       />
 
-      <ConfiguratorPanel>
+      <ConfiguratorPanel shareUrl={shareUrl}>
         <AxisSettings axis={axisType} setAxis={setAxisType} />
         <ReferenceSurfaceSettings
           referenceSurface={referenceSurfaceBase}
@@ -54,5 +158,13 @@ export default function SimpleGridShellPage() {
         <BeamSettings beam={beam} setBeamType={setBeamType} />
       </ConfiguratorPanel>
     </div>
+  );
+}
+
+export default function SimpleGridShellPage() {
+  return (
+    <Suspense fallback={<div className="w-full h-screen bg-[#1a1a1a]" />}>
+      <ConfiguratorPageContent />
+    </Suspense>
   );
 }

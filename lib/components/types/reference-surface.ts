@@ -7,9 +7,9 @@ export type ReferenceSurfaceBase = {
   dY: number;
 };
 
-export type ControlPoints = Vector3[];
 export type ControlPointDefinition = {
-  controlPoints: ControlPoints;
+  /** Resolved world positions (default grid + optional deltas). */
+  controlPoints: Vector3[];
 };
 
 export type ReferenceSurface = ReferenceSurfaceBase & ControlPointDefinition;

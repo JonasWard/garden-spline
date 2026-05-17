@@ -31,7 +31,8 @@
   z-index: 100;
   top: 1rem;
   right: 1rem;
-  width: 3rem;
+  width: auto;
+  max-width: min(360px, 92vw);
   max-height: 3rem;
   overflow: hidden;
   border-radius: 999px;
@@ -47,12 +48,47 @@
   border-radius: 1rem;
 }
 
+.configurator-panel-header {
+  display: flex;
+  align-items: stretch;
+  min-height: 3rem;
+}
+
+.configurator-panel-copy {
+  flex-shrink: 0;
+  height: 3rem;
+  padding: 0 0.75rem;
+  border: 0;
+  border-right: 1px solid rgb(251 240 223 / 0.25);
+  background: none;
+  color: #fbf0df;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.configurator-panel-copy:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.configurator-panel-copy:not(:disabled):hover {
+  background: rgb(251 240 223 / 0.08);
+}
+
+.configurator-panel-shell:not(.is-open) .configurator-panel-copy {
+  padding: 0 0.5rem;
+  font-size: 0.6875rem;
+}
+
 .configurator-panel-toggle {
   display: flex;
+  flex: 1;
   justify-content: space-between;
   align-items: center;
   gap: 0.75rem;
-  width: 100%;
+  min-width: 0;
   height: 3rem;
   padding: 0 0.75rem;
   border: 0;
@@ -62,6 +98,7 @@
 }
 
 .configurator-panel-shell:not(.is-open) .configurator-panel-toggle {
+  flex: 0 0 3rem;
   justify-content: center;
   padding: 0;
 }

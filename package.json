@@ -13,6 +13,7 @@
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.6.1",
     "@tailwindcss/postcss": "^4.3.0",
+    "densing": "^0.3.0",
     "next": "15",
     "postcss": "^8.5.14",
     "react": "^19",
