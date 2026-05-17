@@ -40,48 +40,54 @@ export const ConfiguratorPdfCapture: React.FC<ConfiguratorPdfCaptureProps> = ({
   const scene = useThree((s) => s.scene);
   const invalidate = useThree((s) => s.invalidate);
   const setEnableOrbitConrol = useR3FStore((s) => s.setEnableOrbitConrol);
-  const lastKey = useRef(0);
   const orbitEnabledBeforeExport = useRef(true);
+  const boundaryBoxRef = useRef(boundaryBox);
+  const configuratorStateRef = useRef(configuratorState);
+  const onExportStartRef = useRef(onExportStart);
+  const onExportCompleteRef = useRef(onExportComplete);
+  const onExportErrorRef = useRef(onExportError);
+
+  boundaryBoxRef.current = boundaryBox;
+  configuratorStateRef.current = configuratorState;
+  onExportStartRef.current = onExportStart;
+  onExportCompleteRef.current = onExportComplete;
+  onExportErrorRef.current = onExportError;
 
   useEffect(() => {
-    if (!pdfExportKey || pdfExportKey === lastKey.current) return;
-    lastKey.current = pdfExportKey;
+    if (!pdfExportKey) return;
 
     let cancelled = false;
+    const state = configuratorStateRef.current;
+    const box = boundaryBoxRef.current;
 
     const run = async () => {
       orbitEnabledBeforeExport.current = useR3FStore.getState().enableOrbitConrol;
       setEnableOrbitConrol(false);
-      onExportStart?.();
-      await new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r())));
-      if (cancelled) return;
+      onExportStartRef.current?.();
 
       try {
-        const views = captureOrthographicViews(gl, scene, boundaryBox, {
+        await new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r())));
+        if (cancelled) return;
+
+        const views = captureOrthographicViews(gl, scene, box, {
           width: EXPORT_WIDTH,
           height: EXPORT_HEIGHT
         });
-        const dimensions = structureDimensionsFromBox(boundaryBox);
-        const beamCount = countBeams(
-          configuratorState.axisType,
-          configuratorState.referenceSurfaceBase,
-          configuratorState.beam
-        );
+        const dimensions = structureDimensionsFromBox(box);
+        const beamCount = countBeams(state.axisType, state.referenceSurfaceBase, state.beam);
         await downloadConfiguratorPdf({
           views,
           dimensions,
           beamCount,
-          settingsRows: formatConfiguratorSettingsRows(configuratorState)
+          settingsRows: formatConfiguratorSettingsRows(state)
         });
       } catch (e) {
-        onExportError?.(e);
+        onExportErrorRef.current?.(e);
         console.error('PDF export failed:', e);
       } finally {
-        if (!cancelled) {
-          setEnableOrbitConrol(orbitEnabledBeforeExport.current);
-          invalidate();
-          onExportComplete();
-        }
+        setEnableOrbitConrol(orbitEnabledBeforeExport.current);
+        invalidate();
+        onExportCompleteRef.current();
       }
     };
 
@@ -89,18 +95,7 @@ export const ConfiguratorPdfCapture: React.FC<ConfiguratorPdfCaptureProps> = ({
     return () => {
       cancelled = true;
     };
-  }, [
-    pdfExportKey,
-    boundaryBox,
-    configuratorState,
-    gl,
-    scene,
-    invalidate,
-    setEnableOrbitConrol,
-    onExportStart,
-    onExportComplete,
-    onExportError
-  ]);
+  }, [pdfExportKey, gl, scene, invalidate, setEnableOrbitConrol]);
 
   return null;
 };

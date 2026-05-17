@@ -127,6 +127,8 @@ function ConfiguratorPageContent() {
     return () => window.removeEventListener('popstate', onPopState);
   }, [urlHydrated, encodedState]);
 
+  const onPdfExportComplete = useCallback(() => setIsPdfExporting(false), []);
+
   const onReferenceSurfaceBaseChange = useCallback(
     (referenceSurface: ReferenceSurfaceBase) => {
       setReferenceSurfaceBase(referenceSurface);
@@ -147,7 +149,7 @@ function ConfiguratorPageContent() {
         configuratorState={configuratorState}
         pdfExportKey={pdfExportKey}
         isPdfExporting={isPdfExporting}
-        onPdfExportComplete={() => setIsPdfExporting(false)}
+        onPdfExportComplete={onPdfExportComplete}
         onControlPointsChange={(positions: Vector3[]) => {
           setControlPointDeltas(absoluteToControlPointDeltas(referenceSurfaceBase, positions));
         }}
