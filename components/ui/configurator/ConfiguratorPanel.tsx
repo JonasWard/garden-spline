@@ -117,8 +117,10 @@ export const ConfiguratorPanel: React.FC<{
         <div className="configurator-panel">
           {compact ? null : (
             <p className="configurator-panel-intro">
-              Define an n × m control grid, drag vertices in Z, then Catmull‑Clark subdivide + Z‑only relaxation (naked
-              edges fixed).
+              Define your own grid shell by defining the geometry through the amount of control points you'ld like to
+              have and their default spacing. Refine the precise position of each of the control vertices. Next define
+              the grid you would like. Finally define the dimensions of the beams. A series of helper views are defined
+              in the view settings.
             </p>
           )}
           {compact ? (
