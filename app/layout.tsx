@@ -4,9 +4,9 @@ import "./globals.css";
 const BASE_PATH = '/garden-spline';
 
 export const metadata: Metadata = {
-  title: "Next + React Three Fiber",
-  description: "Static Next.js app with R3F",
-  icons: [{ url: `${BASE_PATH}/logo.svg`, type: "image/svg+xml" }],
+  title: 'Garden Spline',
+  description: 'Silly little parametric shell configurator.',
+  icons: [{ url: `${BASE_PATH}/logo.svg`, type: 'image/svg+xml' }]
 };
 
 export default function RootLayout({

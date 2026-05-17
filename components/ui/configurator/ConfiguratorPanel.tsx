@@ -115,10 +115,12 @@ export const ConfiguratorPanel: React.FC<{
 
       <div id={contentId} className="configurator-panel-body" aria-hidden={!open} inert={!open || undefined}>
         <div className="configurator-panel">
-          <p className="configurator-panel-intro">
-            Define an n × m control grid, drag vertices in Z, then Catmull‑Clark subdivide + Z‑only relaxation (naked
-            edges fixed).
-          </p>
+          {compact ? null : (
+            <p className="configurator-panel-intro">
+              Define an n × m control grid, drag vertices in Z, then Catmull‑Clark subdivide + Z‑only relaxation (naked
+              edges fixed).
+            </p>
+          )}
           {compact ? (
             <>
               <SegmentedSelect

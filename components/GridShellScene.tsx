@@ -14,7 +14,7 @@ import { AxisRender3d } from './geometry/AxisRender3d';
 import { BeamRender } from './geometry/BeamRender';
 import { ControlPoints } from './geometry/ControlPoints';
 import { FitCameraToContent } from './geometry/FitCameraToContent';
-import { ConfiguratorPdfCapture } from './geometry/ConfiguratorPdfCapture';
+import { ConfiguratorPdfCapture } from './export/ConfiguratorPdfCapture';
 import { SceneEnvironment } from './geometry/SceneEnvironment';
 import { SceneSky } from './geometry/SceneSky';
 import { OrbitControls } from '@react-three/drei';
