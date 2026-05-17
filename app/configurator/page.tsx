@@ -147,6 +147,7 @@ function ConfiguratorPageContent() {
         viewSettings={viewSettings}
         cameraFitKey={cameraFitKey}
         configuratorState={configuratorState}
+        shareUrl={shareUrl}
         pdfExportKey={pdfExportKey}
         isPdfExporting={isPdfExporting}
         onPdfExportComplete={onPdfExportComplete}
@@ -163,16 +164,25 @@ function ConfiguratorPageContent() {
           setIsPdfExporting(true);
           setPdfExportKey((k) => k + 1);
         }}
-      >
-        <AxisSettings axis={axisType} setAxis={setAxisType} />
-        <ReferenceSurfaceSettings
-          referenceSurface={referenceSurfaceBase}
-          setReferenceSurface={onReferenceSurfaceBaseChange}
-        />
-        <ViewSettingsUI viewSettings={viewSettings} setViewSettings={setViewSettings} />
-        <ControlPointSettings />
-        <BeamSettings beam={beam} setBeamType={setBeamType} />
-      </ConfiguratorPanel>
+        sections={[
+          { id: 'axis', content: <AxisSettings axis={axisType} setAxis={setAxisType} /> },
+          {
+            id: 'surface',
+            content: (
+              <ReferenceSurfaceSettings
+                referenceSurface={referenceSurfaceBase}
+                setReferenceSurface={onReferenceSurfaceBaseChange}
+              />
+            )
+          },
+          {
+            id: 'view',
+            content: <ViewSettingsUI viewSettings={viewSettings} setViewSettings={setViewSettings} />
+          },
+          { id: 'points', content: <ControlPointSettings /> },
+          { id: 'beam', content: <BeamSettings beam={beam} setBeamType={setBeamType} /> }
+        ]}
+      />
     </div>
   );
 }

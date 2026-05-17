@@ -1,8 +1,15 @@
 'use client';
 
-import { useId, useLayoutEffect, useState } from 'react';
+import { useId, useLayoutEffect, useMemo, useState } from 'react';
 
-const SETTINGS_PANEL_OPEN_MIN_WIDTH_PX = 800;
+import { SegmentedSelect } from '../shared/SegmentedSelect';
+import {
+  CONFIGURATOR_SETTINGS_SECTION_IDS,
+  CONFIGURATOR_SETTINGS_SECTION_LABELS,
+  type ConfiguratorSettingsSectionId,
+  SETTINGS_PANEL_OPEN_MIN_WIDTH_PX
+} from './configurator-settings';
+import { useCompactSettingsLayout } from './use-compact-settings-layout';
 
 import './configurator-panel.css';
 
@@ -24,15 +31,36 @@ const SettingsCog = () => (
   </svg>
 );
 
+export type ConfiguratorSettingsSection = {
+  id: ConfiguratorSettingsSectionId;
+  content: React.ReactNode;
+};
+
 export const ConfiguratorPanel: React.FC<{
-  children: React.ReactNode;
+  sections: ConfiguratorSettingsSection[];
   shareUrl: string;
   onDownloadPdf?: () => void;
   pdfExporting?: boolean;
-}> = ({ children, shareUrl, onDownloadPdf, pdfExporting = false }) => {
+}> = ({ sections, shareUrl, onDownloadPdf, pdfExporting = false }) => {
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [activeSectionId, setActiveSectionId] = useState<ConfiguratorSettingsSectionId>('axis');
   const contentId = useId();
+  const compact = useCompactSettingsLayout();
+
+  const sectionOptions = useMemo(
+    () =>
+      CONFIGURATOR_SETTINGS_SECTION_IDS.map((id) => ({
+        value: id,
+        label: CONFIGURATOR_SETTINGS_SECTION_LABELS[id]
+      })),
+    []
+  );
+
+  const activeSection = useMemo(
+    () => sections.find((s) => s.id === activeSectionId) ?? sections[0],
+    [sections, activeSectionId]
+  );
 
   useLayoutEffect(() => {
     setOpen(window.innerWidth >= SETTINGS_PANEL_OPEN_MIN_WIDTH_PX);
@@ -96,7 +124,21 @@ export const ConfiguratorPanel: React.FC<{
             Define an n × m control grid, drag vertices in Z, then Catmull‑Clark subdivide + Z‑only relaxation (naked
             edges fixed).
           </p>
-          {children}
+          {compact ? (
+            <>
+              <SegmentedSelect
+                aria-label="Settings section"
+                options={sectionOptions}
+                value={activeSectionId}
+                onChange={setActiveSectionId}
+              />
+              <div className="configurator-panel-section-active" role="tabpanel">
+                {activeSection?.content}
+              </div>
+            </>
+          ) : (
+            sections.map((section) => <div key={section.id}>{section.content}</div>)
+          )}
         </div>
       </div>
     </div>

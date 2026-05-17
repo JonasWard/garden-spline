@@ -10,6 +10,7 @@ import { captureOrthographicViews } from '@/lib/components/logic/export/capture-
 import { downloadConfiguratorPdf } from '@/lib/components/logic/export/build-configurator-pdf';
 import { countBeams } from '@/lib/components/logic/export/count-beams';
 import { formatConfiguratorSettingsRows } from '@/lib/components/logic/export/format-settings-table';
+import { resolveFullShareUrl } from '@/lib/components/logic/export/share-url';
 import { structureDimensionsFromBox } from '@/lib/components/logic/export/structure-dimensions';
 
 const EXPORT_WIDTH = 1200;
@@ -19,6 +20,8 @@ export type ConfiguratorPdfCaptureProps = {
   pdfExportKey: number;
   boundaryBox: Box3;
   configuratorState: ConfiguratorState;
+  /** Path + query or absolute share URL for the QR code. */
+  shareUrl: string;
   onExportStart?: () => void;
   onExportComplete: () => void;
   onExportError?: (error: unknown) => void;
@@ -32,6 +35,7 @@ export const ConfiguratorPdfCapture: React.FC<ConfiguratorPdfCaptureProps> = ({
   pdfExportKey,
   boundaryBox,
   configuratorState,
+  shareUrl,
   onExportStart,
   onExportComplete,
   onExportError
@@ -43,12 +47,14 @@ export const ConfiguratorPdfCapture: React.FC<ConfiguratorPdfCaptureProps> = ({
   const orbitEnabledBeforeExport = useRef(true);
   const boundaryBoxRef = useRef(boundaryBox);
   const configuratorStateRef = useRef(configuratorState);
+  const shareUrlRef = useRef(shareUrl);
   const onExportStartRef = useRef(onExportStart);
   const onExportCompleteRef = useRef(onExportComplete);
   const onExportErrorRef = useRef(onExportError);
 
   boundaryBoxRef.current = boundaryBox;
   configuratorStateRef.current = configuratorState;
+  shareUrlRef.current = shareUrl;
   onExportStartRef.current = onExportStart;
   onExportCompleteRef.current = onExportComplete;
   onExportErrorRef.current = onExportError;
@@ -79,7 +85,8 @@ export const ConfiguratorPdfCapture: React.FC<ConfiguratorPdfCaptureProps> = ({
           views,
           dimensions,
           beamCount,
-          settingsRows: formatConfiguratorSettingsRows(state)
+          settingsRows: formatConfiguratorSettingsRows(state),
+          shareUrl: resolveFullShareUrl(shareUrlRef.current)
         });
       } catch (e) {
         onExportErrorRef.current?.(e);

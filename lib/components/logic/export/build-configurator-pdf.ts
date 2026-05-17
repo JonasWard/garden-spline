@@ -1,4 +1,5 @@
 import type { OrthographicViewCaptures } from './capture-orthographic-views';
+import { generateShareQrDataUrl } from './generate-share-qr';
 import { formatMeters, type StructureDimensions } from './structure-dimensions';
 import type { SettingsTableRow } from './format-settings-table';
 
@@ -7,25 +8,49 @@ export type ConfiguratorPdfInput = {
   dimensions: StructureDimensions;
   beamCount: number;
   settingsRows: SettingsTableRow[];
+  /** Full absolute URL encoded in the QR code. */
+  shareUrl: string;
 };
 
 const PDF_FILE = 'grid-shell-config.pdf';
 
 export const downloadConfiguratorPdf = async (input: ConfiguratorPdfInput): Promise<void> => {
   const { jsPDF } = await import('jspdf');
-  const { views, dimensions, beamCount, settingsRows } = input;
+  const { views, dimensions, beamCount, settingsRows, shareUrl } = input;
+  const qrDataUrl = await generateShareQrDataUrl(shareUrl);
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const pageW = doc.internal.pageSize.getWidth();
   const margin = 14;
+  const qrSize = 28;
+  const headerTextRight = pageW - margin - (qrDataUrl ? qrSize + 4 : 0);
   let y = margin;
 
   doc.setFontSize(16);
-  doc.text('Grid shell configuration', margin, y);
+  doc.text('Grid shell configuration', margin, y, { maxWidth: headerTextRight - margin });
+
+  if (qrDataUrl) {
+    doc.addImage(qrDataUrl, 'PNG', pageW - margin - qrSize, y - 2, qrSize, qrSize);
+    doc.setFontSize(7);
+    doc.text('Scan to open', pageW - margin - qrSize, y + qrSize + 1, {
+      maxWidth: qrSize,
+      align: 'center'
+    });
+  }
+
   y += 10;
 
   doc.setFontSize(10);
-  doc.text(`Generated ${new Date().toLocaleString()}`, margin, y);
-  y += 8;
+  doc.text(`Generated ${new Date().toLocaleString()}`, margin, y, { maxWidth: headerTextRight - margin });
+  y += 5;
+
+  if (shareUrl) {
+    doc.setFontSize(7);
+    const urlLines = doc.splitTextToSize(shareUrl, headerTextRight - margin);
+    doc.text(urlLines, margin, y);
+    y += urlLines.length * 3.2 + 3;
+  } else {
+    y += 3;
+  }
 
   const viewsSpec: { id: keyof OrthographicViewCaptures; title: string; dims: string }[] = [
     {

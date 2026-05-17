@@ -34,6 +34,7 @@ export type GridShellSceneProps = {
   /** Increment after loading configurator state to frame the scene. */
   cameraFitKey?: number;
   configuratorState: ConfiguratorState;
+  shareUrl: string;
   pdfExportKey?: number;
   isPdfExporting?: boolean;
   onPdfExportComplete?: () => void;
@@ -47,6 +48,7 @@ export const GridShellScene: React.FC<GridShellSceneProps> = ({
   onControlPointsChange,
   cameraFitKey = 0,
   configuratorState,
+  shareUrl,
   pdfExportKey = 0,
   isPdfExporting = false,
   onPdfExportComplete
@@ -84,6 +86,7 @@ export const GridShellScene: React.FC<GridShellSceneProps> = ({
         pdfExportKey={pdfExportKey}
         boundaryBox={boundaryBox}
         configuratorState={configuratorState}
+        shareUrl={shareUrl}
         onExportComplete={() => onPdfExportComplete?.()}
       />
       <group matrix={CONFIGURATOR_WORLD_MATRIX} matrixAutoUpdate={false}>
