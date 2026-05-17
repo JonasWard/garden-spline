@@ -1,4 +1,5 @@
 import { useR3FStore } from '@/store/r3f-store';
+import { CheckboxHelper } from '../shared/CheckboxHelper';
 import { Select } from '../shared/Select';
 import { useEffect } from 'react';
 
@@ -10,6 +11,8 @@ const constraintOptions: { value: 'x' | 'y' | 'z'; label: string }[] = [
 
 export const ControlPointSettings: React.FC = () => {
   const controlPointConstraint = useR3FStore((state) => state.controlPointConstraint);
+  const showControlPoints = useR3FStore((state) => state.showControlPoints);
+  const setShowControlPoints = useR3FStore((state) => state.setShowControlPoints);
 
   useEffect(() => {
     const listener = (e: KeyboardEvent) => {
@@ -27,6 +30,11 @@ export const ControlPointSettings: React.FC = () => {
         <h2 className="text-base font-semibold text-white/90">Control Point</h2>
       </header>
 
+      <CheckboxHelper
+        label="Show control points"
+        checked={showControlPoints}
+        onChange={() => setShowControlPoints(!showControlPoints)}
+      />
       <Select
         options={constraintOptions}
         label="Constraint axis"

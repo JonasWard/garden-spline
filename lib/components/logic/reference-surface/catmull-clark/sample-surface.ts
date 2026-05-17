@@ -212,7 +212,7 @@ export function catmullClark(
   return { vertices: verts, faces: quads };
 }
 
-type FaceUvDomain = {
+export type FaceUvDomain = {
   coarseFaceIndex: number;
   u0: number;
   u1: number;
@@ -323,6 +323,14 @@ export function gridUvToCoarseFaceLocal(
 }
 
 function prepareMesh(surface: ReferenceSurface, levels: number) {
+  return subdivideReferenceSurfaceMesh(surface, levels);
+}
+
+/** Catmull–Clark refined mesh with per-face coarse UV domains (for sampling and edge viz). */
+export function subdivideReferenceSurfaceMesh(
+  surface: ReferenceSurface,
+  levels: number
+): { vertices: Vector3[]; faces: Quad[]; domains: FaceUvDomain[] } {
   assertSurface(surface);
   const coarseFaces = makeGridQuads(surface.n + 1, surface.m + 1);
   const { vertices, faces } = catmullClark(surface.controlPoints, coarseFaces, levels);

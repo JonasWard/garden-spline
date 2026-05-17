@@ -5,6 +5,7 @@ import type { BeamType } from '@/lib/components/types/beam';
 import { ReferenceSurface } from '@/lib/components/types/reference-surface';
 import { Canvas, Vector3 } from '@react-three/fiber';
 import { AxisRender2d } from './geometry/AxisRender2d';
+import { DividedFaceEdgesRender } from './geometry/DividedFaceEdgesRender';
 import { ReferenceGeometry } from './geometry/ReferenceGeometry';
 import { AxisRender3d } from './geometry/AxisRender3d';
 import { BeamRender } from './geometry/BeamRender';
@@ -32,6 +33,7 @@ export const GridShellScene: React.FC<GridShellSceneProps> = ({
   onControlPointsChange
 }) => {
   const enableOrbitConrol = useR3FStore((s) => s.enableOrbitConrol);
+  const showControlPoints = useR3FStore((s) => s.showControlPoints);
 
   return (
     <Canvas camera={{ position: [2.5, 2, 2.5], fov: 45 }}>
@@ -46,7 +48,8 @@ export const GridShellScene: React.FC<GridShellSceneProps> = ({
         {viewSettings.showReferenceSurfaceVisualisation && (
           <ReferenceGeometry referenceSurface={referenceSurface} showWireframe={viewSettings.showWireframe} />
         )}
-        {viewSettings.showControlPoints && (
+        {viewSettings.showDividedFaceEdges && <DividedFaceEdgesRender referenceSurface={referenceSurface} />}
+        {showControlPoints && (
           <ControlPoints positions={referenceSurface.controlPoints} onChange={onControlPointsChange} />
         )}
       </group>

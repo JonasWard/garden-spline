@@ -3,7 +3,10 @@
 import { useLayoutEffect, useMemo, type FC } from 'react';
 import * as THREE from 'three';
 
-import { buildReferenceSurfaceMeshGeometry } from '@/lib/components/logic/reference-surface/renderer';
+import {
+  buildReferenceSurfaceMeshGeometry,
+  DEFAULT_REFERENCE_SURFACE_SUBDIVISION_LEVELS
+} from '@/lib/components/logic/reference-surface/renderer';
 import type { ReferenceSurface } from '@/lib/components/types/reference-surface';
 
 export type ReferenceGeometryProps = {
@@ -18,7 +21,7 @@ export type ReferenceGeometryProps = {
  */
 export const ReferenceGeometry: FC<ReferenceGeometryProps> = ({
   referenceSurface,
-  subdivisionLevels = 5,
+  subdivisionLevels = DEFAULT_REFERENCE_SURFACE_SUBDIVISION_LEVELS,
   showWireframe = false
 }) => {
   const geometry = useMemo(

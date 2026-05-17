@@ -26,7 +26,7 @@ export default function SimpleGridShellPage() {
     showAxis3d: true,
     showBeam: true,
     showReferenceSurfaceVisualisation: true,
-    showControlPoints: true,
+    showDividedFaceEdges: true,
     showWireframe: false
   });
 

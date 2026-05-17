@@ -5,7 +5,7 @@ export type ViewSettings = {
   showAxis3d: boolean;
   showBeam: boolean;
   showReferenceSurfaceVisualisation: boolean;
-  showControlPoints: boolean;
+  showDividedFaceEdges: boolean;
   showWireframe: boolean;
 };
 
@@ -46,9 +46,9 @@ export const ViewSettingsUI = ({ viewSettings: vS, setViewSettings }: ViewSettin
         }
       />
       <CheckboxHelper
-        label="Show control points"
-        checked={vS.showControlPoints}
-        onChange={() => setViewSettings({ ...vS, showControlPoints: !vS.showControlPoints })}
+        label="Show divided face edges"
+        checked={vS.showDividedFaceEdges}
+        onChange={() => setViewSettings({ ...vS, showDividedFaceEdges: !vS.showDividedFaceEdges })}
       />
       <CheckboxHelper
         label="Show wireframe"
