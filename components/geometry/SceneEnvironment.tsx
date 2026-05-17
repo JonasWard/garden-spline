@@ -73,7 +73,7 @@ export const SceneEnvironment: FC<SceneEnvironmentProps> = ({
           />
           <mesh position={[0, 0, zBottom]} receiveShadow>
             <planeGeometry args={[GROUND_PLANE_SIZE, GROUND_PLANE_SIZE]} />
-            <meshStandardMaterial color={GROUND_COLOR} roughness={0.94} metalness={0} side={THREE.DoubleSide} />
+            <meshStandardMaterial color={GROUND_COLOR} roughness={0.94} metalness={0} side={THREE.FrontSide} />
           </mesh>
         </>
       )}
