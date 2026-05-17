@@ -9,6 +9,15 @@ export type ViewSettings = {
   showWireframe: boolean;
 };
 
+export const DEFAULT_VIEW_SETTINGS: ViewSettings = {
+  showAxis: false,
+  showAxis3d: false,
+  showBeam: true,
+  showReferenceSurfaceVisualisation: false,
+  showDividedFaceEdges: true,
+  showWireframe: false
+};
+
 type ViewSettingsUIProps = {
   viewSettings: ViewSettings;
   setViewSettings: (viewSettings: ViewSettings) => void;
