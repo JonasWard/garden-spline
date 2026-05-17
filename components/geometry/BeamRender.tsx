@@ -32,7 +32,7 @@ export const BeamRender: FC<BeamRenderProps> = ({ axis, referenceSurface, beam }
   }
 
   return (
-    <mesh geometry={geometry}>
+    <mesh geometry={geometry} castShadow receiveShadow>
       <meshStandardMaterial
         color={color}
         metalness={0.08}

@@ -1,4 +1,4 @@
-import { BufferGeometry, Float32BufferAttribute, Vector3 } from 'three';
+import { Box3, BufferGeometry, Float32BufferAttribute, Vector3 } from 'three';
 
 import { quadMeshGeometry } from '@/lib/grid-shell/three';
 import type { Quad } from '@/lib/grid-shell/types';
@@ -102,4 +102,20 @@ export const buildDividedFaceEdgeGeometries = (
 ): BufferGeometry => {
   assertControlPointCount(surface);
   return lineGeometryFromSegments(segmentsFromCoarseFaceUvEdges(surface, subdivisionLevels));
+};
+
+/** Axis-aligned bounds of divided coarse-face edge samples (same data as divided-face edges render). */
+export const computeDividedFaceEdgesBoundingBox = (
+  surface: ReferenceSurface,
+  subdivisionLevels = DEFAULT_REFERENCE_SURFACE_SUBDIVISION_LEVELS
+): Box3 => {
+  assertControlPointCount(surface);
+  const positions = segmentsFromCoarseFaceUvEdges(surface, subdivisionLevels);
+  const box = new Box3();
+  const p = new Vector3();
+  for (let i = 0; i < positions.length; i += 3) {
+    p.set(positions[i]!, positions[i + 1]!, positions[i + 2]!);
+    box.expandByPoint(p);
+  }
+  return box;
 };

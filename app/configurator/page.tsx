@@ -90,7 +90,7 @@ function ConfiguratorPageContent() {
       setViewSettings
     });
     setUrlHydrated(true);
-    setCameraFitKey((k) => k + 1);
+    requestAnimationFrame(() => setCameraFitKey((k) => k + 1));
     // eslint-disable-next-line react-hooks/exhaustive-deps -- hydrate from URL once on mount
   }, []);
 
@@ -116,7 +116,7 @@ function ConfiguratorPageContent() {
           setBeamType,
           setViewSettings
         });
-        setCameraFitKey((k) => k + 1);
+        requestAnimationFrame(() => setCameraFitKey((k) => k + 1));
       } catch (e) {
         console.error('Failed to load configurator state from URL:', e);
       }

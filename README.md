@@ -1,21 +1,5 @@
-# bun-react-tailwind-template
+# Garden Spline
 
-To install dependencies:
+Silly little parametric shell configurator.
 
-```bash
-bun install
-```
-
-To start a development server:
-
-```bash
-bun dev
-```
-
-To run for production:
-
-```bash
-bun start
-```
-
-This project was created using `bun init` in bun v1.3.3. [Bun](https://bun.com) is a fast all-in-one JavaScript runtime.
+check out [jonasward.ch](https://jonasward.ch/#projects/garden-spline) for more info 

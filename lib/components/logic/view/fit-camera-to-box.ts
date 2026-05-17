@@ -20,12 +20,33 @@ export const worldBoxFromLocalPoints = (points: Vector3[], matrix = CONFIGURATOR
   return box;
 };
 
+/** Eight corners of a local-space AABB (for camera framing). */
+export const localBoxCornerPoints = (box: Box3): Vector3[] => {
+  const { min, max } = box;
+  return [
+    new Vector3(min.x, min.y, min.z),
+    new Vector3(max.x, min.y, min.z),
+    new Vector3(min.x, max.y, min.z),
+    new Vector3(max.x, max.y, min.z),
+    new Vector3(min.x, min.y, max.z),
+    new Vector3(max.x, min.y, max.z),
+    new Vector3(min.x, max.y, max.z),
+    new Vector3(max.x, max.y, max.z)
+  ];
+};
+
+export const worldBoxFromLocalBox = (box: Box3, matrix = CONFIGURATOR_WORLD_MATRIX): Box3 =>
+  worldBoxFromLocalPoints(localBoxCornerPoints(box), matrix);
+
+/** Multiplier on fit distance when framing content on load (larger = farther). */
+export const CAMERA_FIT_MARGIN = 1.2;
+
 /** Frame a perspective camera + orbit controls on an axis-aligned world-space box. */
 export const fitPerspectiveCameraToBox = (
   camera: PerspectiveCamera,
   controls: OrbitControls,
   box: Box3,
-  margin = 1.35
+  margin = CAMERA_FIT_MARGIN
 ) => {
   if (box.isEmpty()) return;
 

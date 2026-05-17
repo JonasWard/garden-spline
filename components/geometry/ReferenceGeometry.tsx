@@ -34,7 +34,7 @@ export const ReferenceGeometry: FC<ReferenceGeometryProps> = ({
   const meshColor = useMemo(() => new THREE.Color('#646cff'), []);
 
   return (
-    <mesh geometry={geometry}>
+    <mesh geometry={geometry} castShadow receiveShadow>
       <meshStandardMaterial
         color={meshColor}
         metalness={0.12}
