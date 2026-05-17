@@ -13,6 +13,8 @@ const GROUND_COLOR = '#b8aea3';
 
 export type SceneEnvironmentProps = {
   layout: GeometryGroundLayout;
+  showGround?: boolean;
+  showHuman?: boolean;
 };
 
 const SKIN = { color: '#c9b8a8', roughness: 0.85, metalness: 0.02 };
@@ -49,25 +51,33 @@ const SimpleHuman: FC<{ zBottom: number }> = ({ zBottom }) => (
 /**
  * Ground plane and a simple human figure in local Z-up space (same as control points).
  */
-export const SceneEnvironment: FC<SceneEnvironmentProps> = ({ layout }) => {
+export const SceneEnvironment: FC<SceneEnvironmentProps> = ({
+  layout,
+  showGround = true,
+  showHuman = true
+}) => {
   const { zBottom } = layout;
 
   return (
     <>
-      <ContactShadows
-        position={[0, 0, zBottom + 0.02]}
-        opacity={0.45}
-        scale={40}
-        blur={2.5}
-        far={14}
-        resolution={2048}
-        color="#6e6660"
-      />
-      <mesh position={[0, 0, zBottom]} receiveShadow>
-        <planeGeometry args={[GROUND_PLANE_SIZE, GROUND_PLANE_SIZE]} />
-        <meshStandardMaterial color={GROUND_COLOR} roughness={0.94} metalness={0} side={THREE.DoubleSide} />
-      </mesh>
-      <SimpleHuman zBottom={zBottom} />
+      {showGround && (
+        <>
+          <ContactShadows
+            position={[0, 0, zBottom + 0.02]}
+            opacity={0.45}
+            scale={40}
+            blur={2.5}
+            far={14}
+            resolution={2048}
+            color="#6e6660"
+          />
+          <mesh position={[0, 0, zBottom]} receiveShadow>
+            <planeGeometry args={[GROUND_PLANE_SIZE, GROUND_PLANE_SIZE]} />
+            <meshStandardMaterial color={GROUND_COLOR} roughness={0.94} metalness={0} side={THREE.DoubleSide} />
+          </mesh>
+        </>
+      )}
+      {showHuman && <SimpleHuman zBottom={zBottom} />}
     </>
   );
 };

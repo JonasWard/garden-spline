@@ -54,6 +54,7 @@
   min-height: 3rem;
 }
 
+.configurator-panel-pdf,
 .configurator-panel-copy {
   flex-shrink: 0;
   height: 3rem;
@@ -68,15 +69,18 @@
   cursor: pointer;
 }
 
+.configurator-panel-pdf:disabled,
 .configurator-panel-copy:disabled {
   opacity: 0.45;
   cursor: not-allowed;
 }
 
+.configurator-panel-pdf:not(:disabled):hover,
 .configurator-panel-copy:not(:disabled):hover {
   background: rgb(251 240 223 / 0.08);
 }
 
+.configurator-panel-shell:not(.is-open) .configurator-panel-pdf,
 .configurator-panel-shell:not(.is-open) .configurator-panel-copy {
   padding: 0 0.5rem;
   font-size: 0.6875rem;

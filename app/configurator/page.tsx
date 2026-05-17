@@ -55,6 +55,8 @@ function ConfiguratorPageContent() {
   const [viewSettings, setViewSettings] = useState(initialState.viewSettings);
   const [urlHydrated, setUrlHydrated] = useState(false);
   const [cameraFitKey, setCameraFitKey] = useState(0);
+  const [pdfExportKey, setPdfExportKey] = useState(0);
+  const [isPdfExporting, setIsPdfExporting] = useState(false);
 
   const controlPoints = useMemo(
     () => resolveControlPoints(referenceSurfaceBase, controlPointDeltas),
@@ -142,12 +144,24 @@ function ConfiguratorPageContent() {
         beam={beam}
         viewSettings={viewSettings}
         cameraFitKey={cameraFitKey}
+        configuratorState={configuratorState}
+        pdfExportKey={pdfExportKey}
+        isPdfExporting={isPdfExporting}
+        onPdfExportComplete={() => setIsPdfExporting(false)}
         onControlPointsChange={(positions: Vector3[]) => {
           setControlPointDeltas(absoluteToControlPointDeltas(referenceSurfaceBase, positions));
         }}
       />
 
-      <ConfiguratorPanel shareUrl={shareUrl}>
+      <ConfiguratorPanel
+        shareUrl={shareUrl}
+        pdfExporting={isPdfExporting}
+        onDownloadPdf={() => {
+          if (isPdfExporting) return;
+          setIsPdfExporting(true);
+          setPdfExportKey((k) => k + 1);
+        }}
+      >
         <AxisSettings axis={axisType} setAxis={setAxisType} />
         <ReferenceSurfaceSettings
           referenceSurface={referenceSurfaceBase}

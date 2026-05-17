@@ -14,6 +14,7 @@
     "@react-three/fiber": "^9.6.1",
     "@tailwindcss/postcss": "^4.3.0",
     "densing": "^0.3.0",
+    "jspdf": "^4.2.1",
     "next": "15",
     "postcss": "^8.5.14",
     "react": "^19",

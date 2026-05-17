@@ -24,10 +24,12 @@ const SettingsCog = () => (
   </svg>
 );
 
-export const ConfiguratorPanel: React.FC<{ children: React.ReactNode; shareUrl: string }> = ({
-  children,
-  shareUrl
-}) => {
+export const ConfiguratorPanel: React.FC<{
+  children: React.ReactNode;
+  shareUrl: string;
+  onDownloadPdf?: () => void;
+  pdfExporting?: boolean;
+}> = ({ children, shareUrl, onDownloadPdf, pdfExporting = false }) => {
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const contentId = useId();
@@ -51,6 +53,15 @@ export const ConfiguratorPanel: React.FC<{ children: React.ReactNode; shareUrl: 
   return (
     <div className={`configurator-panel-shell${open ? ' is-open' : ''}`}>
       <div className="configurator-panel-header">
+        <button
+          type="button"
+          className="configurator-panel-pdf"
+          onClick={onDownloadPdf}
+          disabled={!onDownloadPdf || pdfExporting}
+          title="Download PDF with top, front, and left views"
+        >
+          {pdfExporting ? 'PDF…' : 'PDF'}
+        </button>
         <button
           type="button"
           className="configurator-panel-copy"
