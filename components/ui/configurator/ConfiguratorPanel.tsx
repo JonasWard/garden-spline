@@ -2,6 +2,7 @@
 
 import { useId, useLayoutEffect, useMemo, useState } from 'react';
 
+import { resolveFullShareUrl } from '@/lib/components/logic/export/share-url';
 import { SegmentedSelect } from '../shared/SegmentedSelect';
 import {
   CONFIGURATOR_SETTINGS_SECTION_IDS,
@@ -67,8 +68,8 @@ export const ConfiguratorPanel: React.FC<{
   }, []);
 
   const onCopyUrl = async () => {
-    if (!shareUrl) return;
-    const fullUrl = shareUrl.startsWith('http') ? shareUrl : `${window.location.origin}${shareUrl}`;
+    const fullUrl = resolveFullShareUrl(shareUrl);
+    if (!fullUrl) return;
     try {
       await navigator.clipboard.writeText(fullUrl);
       setCopied(true);
@@ -95,13 +96,7 @@ export const ConfiguratorPanel: React.FC<{
           className="configurator-panel-copy"
           onClick={onCopyUrl}
           disabled={!shareUrl}
-          title={
-            shareUrl
-              ? shareUrl.startsWith('http')
-                ? shareUrl
-                : `${typeof window !== 'undefined' ? window.location.origin : ''}${shareUrl}`
-              : 'URL not ready'
-          }
+          title={shareUrl ? resolveFullShareUrl(shareUrl) || 'URL not ready' : 'URL not ready'}
         >
           {copied ? 'Copied' : 'Copy URL'}
         </button>
