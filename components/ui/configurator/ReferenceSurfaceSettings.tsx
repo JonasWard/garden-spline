@@ -14,7 +14,7 @@ export const ReferenceSurfaceSettings: React.FC<ReferenceSurfaceSettingsProps> =
   setReferenceSurface
 }) => (
   <section className="configurator-panel section" aria-label="Reference surface base layout">
-    <header className="space-y-1">
+    <header className="configurator-panel-content-header">
       <h2 className="text-base font-semibold text-white/90">Reference surface</h2>
     </header>
 

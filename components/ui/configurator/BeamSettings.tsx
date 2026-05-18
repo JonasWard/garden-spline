@@ -11,7 +11,7 @@ const beamTypeOptions: { value: BeamType['type']; label: string }[] = [
 
 export const BeamSettings: React.FC<{ beam: BeamType; setBeamType: (b: BeamType) => void }> = ({ beam, setBeamType }) => (
   <section className="configurator-panel section" aria-label="Axis pattern settings">
-    <header className="space-y-1">
+    <header className="configurator-panel-content-header">
       <h2 className="text-base font-semibold text-white/90">Beam</h2>
     </header>
 

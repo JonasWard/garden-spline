@@ -26,7 +26,7 @@ type ViewSettingsUIProps = {
 export const ViewSettingsUI = ({ viewSettings: vS, setViewSettings }: ViewSettingsUIProps) => {
   return (
     <section className="configurator-panel section" aria-label="Axis pattern settings">
-      <header className="space-y-1">
+      <header className="configurator-panel-content-header">
         <h2 className="text-base font-semibold text-white/90">View Settings</h2>
       </header>
       <CheckboxHelper

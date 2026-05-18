@@ -20,7 +20,7 @@ const minMaxStep = { min: 0.01, max: 5, step: 0.05 };
 
 export const AxisSettings: React.FC<AxisSettingsProps> = ({ axis, setAxis }) => (
   <section className="configurator-panel section" aria-label="Axis pattern settings">
-    <header className="space-y-1">
+    <header className="configurator-panel-content-header">
       <h2 className="text-base font-semibold text-white/90">Axis</h2>
       <p className="text-xs text-white/45">Shell overlay pattern (tri / hex / quad / octagonal).</p>
     </header>

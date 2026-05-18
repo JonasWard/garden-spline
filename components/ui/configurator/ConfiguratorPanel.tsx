@@ -108,7 +108,7 @@ export const ConfiguratorPanel: React.FC<{
           aria-controls={contentId}
           aria-label={open ? 'Close settings' : 'Open settings'}
         >
-          {open ? <span className="configurator-panel-toggle__title">Simple grid shell</span> : null}
+          {open ? <span className="configurator-panel-toggle__title">Configuration</span> : null}
           <SettingsCog />
         </button>
       </div>
