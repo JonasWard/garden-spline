@@ -29,7 +29,7 @@ import type { ReferenceSurfaceBase } from '@/lib/components/types/reference-surf
 import type { ViewSettings } from '@/components/ui/configurator/ViewSettings';
 
 /** Wire-format version (bump when {@link CONFIGURATOR_DENSE_SCHEMA} layout changes). */
-export const CONFIGURATOR_STATE_VERSION = 2;
+export const CONFIGURATOR_STATE_VERSION = 3;
 
 const AXIS_PATTERN_TYPES = ['tri', 'quad', 'hex', 'octagonal'] as const;
 const BEAM_TYPES = ['inline', 'stack'] as const;
@@ -104,7 +104,8 @@ export const CONFIGURATOR_DENSE_SCHEMA = schema(
     bool('showBeam'),
     bool('showReferenceSurfaceVisualisation'),
     bool('showDividedFaceEdges'),
-    bool('showWireframe')
+    bool('showWireframe'),
+    bool('showBottomPlane')
   )
 );
 
@@ -128,7 +129,10 @@ export type ConfiguratorState = {
 };
 
 export { type ControlPointDelta, type ControlPointDeltas };
-export { emptyControlPointDeltas, resolveControlPoints } from '@/lib/components/logic/reference-surface/control-point-deltas';
+export {
+  emptyControlPointDeltas,
+  resolveControlPoints
+} from '@/lib/components/logic/reference-surface/control-point-deltas';
 
 const assertControlPointDeltaCount = (base: ReferenceSurfaceBase, deltas: ControlPointDeltas) => {
   const expected = controlPointCount(base);
@@ -152,17 +156,31 @@ export const configuratorStateToDense = (state: ConfiguratorState): DenseConfigu
   };
 };
 
-export const denseToConfiguratorState = (dense: DenseConfiguratorState): ConfiguratorState => {
-  if (dense.version !== CONFIGURATOR_STATE_VERSION) {
-    throw new Error(`Unsupported configurator state version ${dense.version} (expected ${CONFIGURATOR_STATE_VERSION})`);
+const normalizeDenseVersion = (dense: DenseConfiguratorState): DenseConfiguratorState => {
+  if (dense.version === 2) {
+    return {
+      ...dense,
+      version: CONFIGURATOR_STATE_VERSION,
+      viewSettings: { ...dense.viewSettings, showBottomPlane: true }
+    };
   }
-  assertControlPointDeltaCount(dense.referenceSurfaceBase, dense.controlPointDeltas);
+  return dense;
+};
+
+export const denseToConfiguratorState = (dense: DenseConfiguratorState): ConfiguratorState => {
+  const normalized = normalizeDenseVersion(dense);
+  if (normalized.version !== CONFIGURATOR_STATE_VERSION) {
+    throw new Error(
+      `Unsupported configurator state version ${normalized.version} (expected ${CONFIGURATOR_STATE_VERSION})`
+    );
+  }
+  assertControlPointDeltaCount(normalized.referenceSurfaceBase, normalized.controlPointDeltas);
   return {
-    axisType: dense.axisType,
-    referenceSurfaceBase: dense.referenceSurfaceBase,
-    controlPointDeltas: normalizeDenseDeltas(dense.controlPointDeltas),
-    beam: dense.beam,
-    viewSettings: dense.viewSettings
+    axisType: normalized.axisType,
+    referenceSurfaceBase: normalized.referenceSurfaceBase,
+    controlPointDeltas: normalizeDenseDeltas(normalized.controlPointDeltas),
+    beam: normalized.beam,
+    viewSettings: normalized.viewSettings
   };
 };
 
@@ -176,7 +194,7 @@ export const decodeConfiguratorState = (encoded: string): ConfiguratorState =>
 
 /** Canonical dense string used when no `?state=` is provided. */
 export const DEFAULT_CONFIGURATOR_STATE =
-  'AkYmNEJUlSDPufaWL6H0HCL6H0HCrVn2li-h9BwgvofQcIvofRLC-h9EsAvofRLC-h9EsC-h9BwgvofQcLPtaqWL6H0HCL6H0HCrVWqliMYOmU';
+  'A0YmNEJUlSDPufaWL6H0HCL6H0HCrVn2li-h9BwgvofQcIvofRLC-h9EsAvofRLC-h9EsC-h9BwgvofQcLPtaqWL6H0HCL6H0HCrVWqliMYOmV';
 
 export const createDefaultConfiguratorState = (): ConfiguratorState =>
   decodeConfiguratorState(DEFAULT_CONFIGURATOR_STATE);

@@ -106,6 +106,7 @@ export const GridShellScene: React.FC<GridShellSceneProps> = ({
         />
         <SceneEnvironment
           layout={groundLayout}
+          showBottomPlane={viewSettings.showBottomPlane}
           showGround={!isPdfExporting}
           showHuman={!isPdfExporting}
         />

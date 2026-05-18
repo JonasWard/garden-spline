@@ -13,9 +13,14 @@ const GROUND_COLOR = '#b8aea3';
 
 export type SceneEnvironmentProps = {
   layout: GeometryGroundLayout;
+  /** When false, ground is still drawn at {@link BOTTOM_PLANE_HIDDEN_OPACITY}. */
+  showBottomPlane?: boolean;
+  /** When false, ground and shadows are omitted entirely (e.g. PDF export). */
   showGround?: boolean;
   showHuman?: boolean;
 };
+
+const BOTTOM_PLANE_HIDDEN_OPACITY = 0.25;
 
 const SKIN = { color: '#c9b8a8', roughness: 0.85, metalness: 0.02 };
 const SKIN_HEAD = { color: '#d4c4b5', roughness: 0.8, metalness: 0.02 };
@@ -53,27 +58,39 @@ const SimpleHuman: FC<{ zBottom: number }> = ({ zBottom }) => (
  */
 export const SceneEnvironment: FC<SceneEnvironmentProps> = ({
   layout,
+  showBottomPlane = true,
   showGround = true,
   showHuman = true
 }) => {
   const { zBottom } = layout;
+  const groundOpacity = showBottomPlane ? 1 : BOTTOM_PLANE_HIDDEN_OPACITY;
 
   return (
     <>
       {showGround && (
         <>
-          <ContactShadows
-            position={[0, 0, zBottom + 0.02]}
-            opacity={0.45}
-            scale={40}
-            blur={2.5}
-            far={14}
-            resolution={2048}
-            color="#6e6660"
-          />
+          {showBottomPlane && (
+            <ContactShadows
+              position={[0, 0, zBottom + 0.02]}
+              opacity={0.45}
+              scale={40}
+              blur={2.5}
+              far={14}
+              resolution={2048}
+              color="#6e6660"
+            />
+          )}
           <mesh position={[0, 0, zBottom]} receiveShadow>
             <planeGeometry args={[GROUND_PLANE_SIZE, GROUND_PLANE_SIZE]} />
-            <meshStandardMaterial color={GROUND_COLOR} roughness={0.94} metalness={0} side={THREE.FrontSide} />
+            <meshStandardMaterial
+              color={GROUND_COLOR}
+              roughness={0.94}
+              metalness={0}
+              transparent={groundOpacity < 1}
+              opacity={groundOpacity}
+              depthWrite={groundOpacity >= 1}
+              side={THREE.FrontSide}
+            />
           </mesh>
         </>
       )}

@@ -37,7 +37,8 @@ export const formatConfiguratorSettingsRows = (state: ConfiguratorState): Settin
     { label: 'Show beam', value: yesNo(vs.showBeam) },
     { label: 'Show reference surface', value: yesNo(vs.showReferenceSurfaceVisualisation) },
     { label: 'Show divided face edges', value: yesNo(vs.showDividedFaceEdges) },
-    { label: 'Show wireframe', value: yesNo(vs.showWireframe) }
+    { label: 'Show wireframe', value: yesNo(vs.showWireframe) },
+    { label: 'Show bottom plane', value: yesNo(vs.showBottomPlane) }
   );
 
   return rows;

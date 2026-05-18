@@ -7,6 +7,8 @@ export type ViewSettings = {
   showReferenceSurfaceVisualisation: boolean;
   showDividedFaceEdges: boolean;
   showWireframe: boolean;
+  /** Full-opacity ground plane; when false the plane stays at 25% opacity. */
+  showBottomPlane: boolean;
 };
 
 export const DEFAULT_VIEW_SETTINGS: ViewSettings = {
@@ -15,7 +17,8 @@ export const DEFAULT_VIEW_SETTINGS: ViewSettings = {
   showBeam: true,
   showReferenceSurfaceVisualisation: false,
   showDividedFaceEdges: true,
-  showWireframe: false
+  showWireframe: false,
+  showBottomPlane: true
 };
 
 type ViewSettingsUIProps = {
@@ -63,6 +66,11 @@ export const ViewSettingsUI = ({ viewSettings: vS, setViewSettings }: ViewSettin
         label="Show wireframe"
         checked={vS.showWireframe}
         onChange={() => setViewSettings({ ...vS, showWireframe: !vS.showWireframe })}
+      />
+      <CheckboxHelper
+        label="Show bottom plane"
+        checked={vS.showBottomPlane}
+        onChange={() => setViewSettings({ ...vS, showBottomPlane: !vS.showBottomPlane })}
       />
     </section>
   );

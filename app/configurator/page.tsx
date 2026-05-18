@@ -15,6 +15,7 @@ import { ReferenceSurfaceSettings } from '@/components/ui/configurator/Reference
 import { AxisSettings } from '@/components/ui/configurator/AxisSettings';
 import { ViewSettingsUI } from '@/components/ui/configurator/ViewSettings';
 import { ConfiguratorPanel } from '@/components/ui/configurator/ConfiguratorPanel';
+import { ZoomToExtentsButton } from '@/components/ui/configurator/ZoomToExtentsButton';
 import { BeamSettings } from '@/components/ui/configurator/BeamSettings';
 import { ControlPointSettings } from '@/components/ui/configurator/ControlPointSettings';
 import {
@@ -155,6 +156,8 @@ function ConfiguratorPageContent() {
           setControlPointDeltas(absoluteToControlPointDeltas(referenceSurfaceBase, positions));
         }}
       />
+
+      <ZoomToExtentsButton onClick={() => setCameraFitKey((k) => k + 1)} />
 
       <ConfiguratorPanel
         shareUrl={shareUrl}
