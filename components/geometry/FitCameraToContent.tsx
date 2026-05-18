@@ -33,8 +33,9 @@ export const FitCameraToContent: React.FC<FitCameraToContentProps> = ({
   const boundaryBoxRef = useRef(boundaryBox);
   boundaryBoxRef.current = boundaryBox;
 
+  /** Only re-fit when `fitKey` changes (URL load / history), not when geometry updates the boundary box. */
   useEffect(() => {
-    if (!fitKey || boundaryBox.isEmpty()) return;
+    if (!fitKey) return;
 
     let cancelled = false;
     let attempts = 0;
@@ -49,6 +50,8 @@ export const FitCameraToContent: React.FC<FitCameraToContentProps> = ({
         return;
       }
 
+      if (boundaryBoxRef.current.isEmpty()) return;
+
       const box = worldBoxFromLocalBox(boundaryBoxRef.current);
       const pad = Math.max(box.getSize(new Vector3()).length() * 0.12, 0.5);
       box.expandByScalar(pad);
@@ -62,7 +65,7 @@ export const FitCameraToContent: React.FC<FitCameraToContentProps> = ({
     return () => {
       cancelled = true;
     };
-  }, [fitKey, boundaryBox, camera, storeControls, orbitControlsRef, invalidate]);
+  }, [fitKey, camera, storeControls, orbitControlsRef, invalidate]);
 
   return null;
 };
